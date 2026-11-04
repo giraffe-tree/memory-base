@@ -15,3 +15,11 @@ projects:
     local_path: refernece/mem0
     revision_time: '2026-11-04T18:55:26+08:00'
     scope: Python OSS Memory/AsyncMemory、默认配置、写入/检索/显式更新删除、SQLite/实体collection、自托管REST与HostedClient边界及相关测试的定向源码阅读；不代表托管服务实现或完整模型实测
+  letta:
+    display_name: Letta
+    repository: https://github.com/letta-ai/letta-code
+    commit: e6d6cc27ef1111da80e919dc1cef179613894b66
+    verified_on: '2026-11-04'
+    local_path: refernece/letta-code
+    revision_time: '2026-11-04T15:41:15+08:00'
+    scope: 当前letta-code的MemFS v2、LocalBackend/LocalStore、Memory渐进读取、system prompt编译、消息检索、reflection与AppServer的定向源码阅读；Cloud仅核验客户端边界，不以旧V1归档替代当前实现

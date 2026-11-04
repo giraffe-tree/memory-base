@@ -2,7 +2,7 @@
 
 日期：2026-11-04（Asia/Shanghai）。
 
-当前版本：已加入Mem0与四篇横向比较，共37个知识点。以下先保留ReMe首版记录，最新增量与验收见文末“第二版 · Mem0与横向比较”。
+当前版本：已加入当前Letta Code、四篇三方比较和显式本地“已知道”标记，共53个知识点。历史阶段记录保留，最新增量与验收见文末“第三版 · Letta与本地已知标记”。
 
 ## 目标与当前阶段
 
@@ -112,3 +112,49 @@
 本机Codex已建立每天北京时间09:00的本地任务（ID: memory-base），仅失败时通知。任务配置不进入Git；新机器需另行设置。脚本不自动运行上游代码、修改研究、提交或push。
 
 提交前检查：37篇／7组生产构建通过，暂存空白检查通过，暂存中无refernece文件和Git子模块。
+
+
+## 第三版 · Letta与本地已知标记
+
+### 目标、固定版本与研究范围
+
+用户要求可自行标记已知知识点并保存在浏览器，继续多agent研究Letta，所有横向比较以源码证据为基础，完成后提交push更新在线站点。
+
+官方letta-ai/letta主分支8816d3a8516893bfdc0fa14bfb1235226012e295已是入口页，README指向当前letta-ai/letta-code。入口快照只读保留在refernece/letta；实际研究与CI使用refernece/letta-code，固定e6d6cc27ef1111da80e919dc1cef179613894b66，提交时间2026-11-04 15:41:15（UTC+8）。未使用旧V1 archive，不把历史Python服务当作当前实现。ReMe与Mem0保持原基线，三个研究上游均未修改。
+
+### 分工与证据流程
+
+两个研究agent分别编写Letta十个切面的01–05与06–10；网页agent实现标记、多项目图与源码链接校验；统筹者编写基础入口、四篇三方证据矩阵、20个局部样本，整合文档并验收浏览器。
+
+两个研究agent随后只读交叉检查三方矩阵、基础与实验。按结果补充AutoMemory、MemoryClient、vector payload、MemFS Git、core编译与路径工具的直接证据，避免一个链接承担未覆盖的结论；明确config=null/cutover=false/预检404的条件，区分queued与no_work，修正“空结果、异常、截断”的响应语义。自动链接检查只证明版本与路径，不替代这些语义审阅。
+
+新增16篇：基础1、项目10、三方比较4、局部实验1。总53篇／10组，48篇源码核验、3篇局部实验、2篇待运行方案。旧双项目路由和4篇比较保留，三方比较分别声明3个项目与其固定来源。
+
+### 核心发现与边界
+
+- 当前Letta Code是持久Agent harness；默认api分流、显式local实现、AppServer入口与Cloud内部边界分别说明。
+- MemFS v2根core与deferred分层；本地prompt从Git HEAD编译，Memory工具读工作树。文件写入、commit、同步、重编译与模型实际使用不是一个完成信号。
+- 本地历史消息搜索扫描transcript并使用词项排名，明确拒绝vector/hybrid；远程客户端只可核验搜索请求，不补写Cloud内部排序。
+- memory builtin subagent当前是repair-only；harness记忆操作文件锁不覆盖主Agent所有自身编辑，不能宣称全局写入事务。
+- reflection的客户端Code-managed路径与Cloud admission分开；queued/no_work只确认排队或本次无新任务，不证明知识已整合。
+- 本地LocalStore保存JSON／JSONL状态，与独立MemFS Git树分别管理；当前文件删除不证明历史、会话或远端内容都被擦除。
+
+### 用户标记与验证
+
+目录每课新增独立原生复选框，正文顶部／底部和学习记录弹窗共用同一状态逻辑。保留memory-base:learning:v1，保存旧ID和未知课程记录，打开文章不写入完成；标记可撤销，读取不可用、写失败或损坏数据有持续提示且不覆盖损坏原值。storage事件读取最新磁盘状态同步同源标签，按当前课程统计已知数量。未增加服务器账号或云同步。
+
+实际检查：
+
+- npm test：9项通过，覆盖v1回读／未知ID保留、顺序写合并与跨实例同步、失败重试、损坏数据保护、无storage暂存；另有固定证据链接的正例及版本漂移／未知仓／错误路径负例。
+- node experiments/letta-memory-constraints/run.mjs：20/20通过。三个未修改TS helper经TypeScript转译后在临时目录加载，合成文件树验证frontmatter、core/deferred分类、索引要求、Unicode码点预算及只读策略。没有执行完整Letta、Git hook、真实prompt投影、模型、Cloud或服务。
+- npm run build -- --base /memory-base/：53篇／10组、三个固定Git树、正文源码链接、TypeScript与生产构建通过。内容单chunk约679KB／gzip148KB，Vite给出500KB体积提示；本轮没有为此改懒加载。
+- 本地生产预览逐一打开53个知识点，标题、状态、来源、自测与顶部标记均存在；旧双比各2张来源卡，四篇三方各3张。测试期间无console error/warn。
+- 真浏览器验证目录勾选不导航、正文同步、刷新保留、两同源标签增删同步、弹窗逐条操作和Space键撤销。测试只改自己的目标课程并恢复原标记，未清空用户数据。存储异常路径由单元测试覆盖，没有故意破坏真实浏览器数据。
+- 390×844手机验证项目筛选、目录独立勾选、选课关闭目录与顶部标记；代表页根宽390无页面级横向溢出，结束后恢复视口。
+- 三项目每日源码更新脚本实际运行成功，最新视图与固定研究版本分开；现有09:00定时任务已纳入Letta Code，仍只失败通知，不自动改研究或push。
+
+### 发布与下一步
+
+本轮通过现有GitHub Pages工作流发布，在线入口仍为https://giraffe-tree.github.io/memory-base/。提交前完成以上检查；远程构建与部署结果在仓库Actions中保留。
+
+尚未运行Letta真实模型、Cloud服务端、reflection完整整合、消息检索质量或三套系统同环境效果实验。下一步固定运行表面、provider、输入、预算与来源版本，分别追踪原始材料、当前载体、历史、供给和回答，再讨论效果与成本。

@@ -12,6 +12,7 @@ groups:
   - foundations.start.digest
   - foundations.start.recall
   - foundations.start.mem0
+  - foundations.start.letta
 - id: reme-core
   title: ReMe · 数据与主链路
   description: 沿着入口、记忆模型、写入、存储与检索追踪源码。
@@ -48,6 +49,24 @@ groups:
   - projects.mem0.integration-isolation
   - projects.mem0.evaluation-observability
   - projects.mem0.cost-adoption
+- id: letta-core
+  title: Letta · 数据与主链路
+  description: 沿当前letta-code追踪MemFS、已提交core、渐进读取和消息检索。
+  lessons:
+  - projects.letta.overview
+  - projects.letta.memory-model
+  - projects.letta.write-path
+  - projects.letta.storage-index
+  - projects.letta.retrieval-context
+- id: letta-engineering
+  title: Letta · 生命周期与边界
+  description: 区分本地与Cloud的更新、同步、运行时、接入和观测证据。
+  lessons:
+  - projects.letta.updates-forgetting
+  - projects.letta.runtime-consistency
+  - projects.letta.integration-isolation
+  - projects.letta.evaluation-observability
+  - projects.letta.cost-adoption
 - id: comparisons
   title: 横向比较 · ReMe × Mem0
   description: 沿相同问题比较状态归属、写入、更正与检索，不混用两套实现。
@@ -56,6 +75,14 @@ groups:
   - comparisons.write-path
   - comparisons.fact-updates
   - comparisons.retrieval-context
+- id: three-way-comparisons
+  title: 三方比较 · ReMe × Mem0 × Letta
+  description: 逐项对照三个固定版本，每个结论提供各自源码证据及实测边界。
+  lessons:
+  - comparisons.three-way-architecture
+  - comparisons.three-way-write-path
+  - comparisons.three-way-fact-updates
+  - comparisons.three-way-retrieval-context
 - id: experiments
   title: 实验与待验证问题
   description: 已运行的局部实验，与仍需模型或完整运行时验证的边界。
@@ -64,3 +91,4 @@ groups:
   - experiments.duplicate-write
   - experiments.fact-updates
   - experiments.mem0-local-boundaries
+  - experiments.letta-memory-constraints

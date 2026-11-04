@@ -16,6 +16,7 @@ REFERENCES = ROOT / "refernece"
 UPSTREAMS = (
     ("ReMe", "https://github.com/agentscope-ai/ReMe.git"),
     ("mem0", "https://github.com/mem0ai/mem0.git"),
+    ("letta-code", "https://github.com/letta-ai/letta-code.git"),
 )
 
 

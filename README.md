@@ -4,7 +4,7 @@
 
 目标是能沿源码讲清楚：**谁决定记什么，数据由谁持有，何时能被找回，发生冲突后如何更正，以及这些记忆怎样影响下一次模型调用。**
 
-> 已完成 ReMe 与 Mem0 两个固定版本的源码主线、四篇横向比较和本地学习网页，共37个知识点：33篇源码核验、2篇局部实验验证、2篇待运行方案。未完成两套系统同环境的真实模型端到端评测。
+> 已完成ReMe、Mem0与当前Letta Code三个固定版本的源码主线，保留四篇双项目比较并新增四篇三方比较，共53个知识点：48篇源码核验、3篇局部实验验证、2篇待运行方案。没有三套系统同环境的真实模型端到端评测结论。
 
 ## 打开学习手册
 
@@ -20,34 +20,38 @@ npm ci
 npm run dev
 ```
 
-打开 [Memory Base 本地学习手册](http://127.0.0.1:8770/#/overview)，也可直接阅读 [认识 ReMe](http://127.0.0.1:8770/#/lesson/foundations.start.reme)、[Mem0 系统边界](http://127.0.0.1:8770/#/lesson/projects.mem0.overview) 或 [ReMe × Mem0 架构对照](http://127.0.0.1:8770/#/lesson/comparisons.architecture-map)。默认端口为 8770，避免占用参考手册的 8769。
+打开 [Memory Base 本地学习手册](http://127.0.0.1:8770/#/overview)，也可直接阅读 [认识 ReMe](http://127.0.0.1:8770/#/lesson/foundations.start.reme)、[Mem0 系统边界](http://127.0.0.1:8770/#/lesson/projects.mem0.overview)、[Letta研究](http://127.0.0.1:8770/#/lesson/projects.letta.overview) 或 [三方架构对照](http://127.0.0.1:8770/#/lesson/comparisons.three-way-architecture)。默认端口为 8770，避免占用参考手册的 8769。
 
-网页提供分组目录、项目与全文搜索组合筛选、前后篇、源码来源、章节索引、折叠自测、按项目区分的交互链路图和本机学习进度。比较页同时展示两个项目各自的固定版本与来源。主动点击“我能讲清楚了”才会记录学会，浏览页面不会自动完成课程；标记可以撤销，数据仅保存在当前浏览器。
+网页提供分组目录、项目与全文搜索组合筛选、前后篇、源码来源、章节索引、折叠自测、按项目区分的交互链路图和本机学习进度。比较页按声明展示两个或三个项目各自的固定版本与来源。可以直接在目录、正文顶部／底部或学习记录弹窗勾选“已知道”，无需先打开每篇文章；标记可撤销，阅读不会自动完成课程。数据使用localStorage保存在当前浏览器的当前站点，刷新后保留，同源标签同步；沿用原v1记录，不上传服务器。清除网站数据后记录会丢失；存储不可用或旧数据损坏时页面会明确提示，不冒充已经保存。
 
 ## 研究基线与验证范围
 
 - ReMe 源码位于 `refernece/ReMe/`，固定 commit 为 `d323356e6f11c0faf4bf30fae7a2edc30e18fbb9`。
-- Mem0 源码位于 `refernece/mem0/`，固定 commit 为 `ed1f10fc87080f0b67f99be370817504888462ab`。主要研究 Python OSS；HostedClient、REST与TypeScript表面分别标明可见范围。两个项目核验日期均为2026-11-04。
+- Mem0 源码位于 `refernece/mem0/`，固定 commit 为 `ed1f10fc87080f0b67f99be370817504888462ab`。主要研究 Python OSS；HostedClient、REST与TypeScript表面分别标明可见范围。研究核验日期为2026-11-04。
+- Letta当前源码位于 `refernece/letta-code/`，固定commit `e6d6cc27ef1111da80e919dc1cef179613894b66`。原 `letta-ai/letta` 已变为入口页，指向当前letta-code；本研究不使用旧V1 archive作为现状。LocalBackend实现与Cloud API可见边界分别说明。
 - 本地上游为独立 Git 工作副本，主仓库忽略该目录。首次获取按下方“获取与每日更新源码”操作；上游没有研究性修改。
-- 已覆盖基础入口9页、项目研究20页、横向比较4页、实验4页。目录和基线分别见 [catalog.yaml](curriculum/catalog.yaml) 与 [revisions.yaml](sources/revisions.yaml)。
+- 已覆盖基础入口10页、项目研究30页、横向比较8页、实验5页。目录和基线分别见 [catalog.yaml](curriculum/catalog.yaml) 与 [revisions.yaml](sources/revisions.yaml)。
 - 配置与路径 helper 的 13 个局部样本实际通过，使用合成输入和临时工作区；没有启动完整 ReMe、模型或服务。当前 Python 实验环境与上游完整依赖声明不同，具体版本与局限见 [实验页](experiments/configuration-boundaries/README.md)。
 - Mem0排序与SQLite真实模块的17个合成局部样本通过，未构造Memory或启动模型／向量服务，见 [Mem0局部实验](experiments/mem0-local-boundaries/README.md)。
+- Letta三个真实TS辅助模块转译后执行20个合成样本通过，只核验MemFS格式、路径分类与树约束，没有构造Agent或运行Git／Cloud／模型，见 [Letta局部实验](experiments/letta-memory-constraints/README.md)。
 - 重复写入与事实更新已有实验方案，状态为“待验证”；读过上游测试不算本轮运行通过。没有测得 token 收益、回答质量或部署延迟。
 
-常用检查（严格内容检查需要先获取两个固定版本的上游源码）：
+常用检查（严格内容检查需要先获取三个固定版本的上游源码）：
 
 ```bash
 npm run check
+npm test
 npm run build
 python3 experiments/configuration-boundaries/run.py
 python3 experiments/mem0-local-boundaries/run.py
+node experiments/letta-memory-constraints/run.mjs
 ```
 
-前两个命令检查文章ID、目录、先修、各项目Git HEAD、源码文件、元数据、TypeScript和静态构建。ReMe局部实验需PyYAML、Pydantic；Mem0局部实验只用Python标准库。两者环境、加载方式与结果分别保存在实验目录，局部通过不代表完整依赖安装兼容性。构建产物为 `dist/`，由 GitHub Pages 托管。
+检查命令核对文章ID、目录、先修、各项目Git HEAD、源码文件、正文固定版本链接、元数据、TypeScript和静态构建；npm test验证学习记录兼容、异常、同步及证据链接负例。ReMe局部实验需PyYAML、Pydantic；Mem0局部实验只用Python标准库。三组实验的环境、加载方式与结果分别保存在各自目录，局部通过不代表完整依赖安装兼容性。构建产物为 `dist/`，由 GitHub Pages 托管。
 
 ## GitHub Pages 发布
 
-推送到 `main` 后，[Pages 工作流](.github/workflows/pages.yml) 自动安装锁定依赖、根据 `sources/revisions.yaml` 临时获取固定版本的上游源码、执行内容与 TypeScript 校验，并以 `/memory-base/` 为路径构建和发布 `dist/`。也可以在仓库 Actions 中手动触发。
+推送到 `main` 后，[Pages 工作流](.github/workflows/pages.yml) 自动安装锁定依赖、根据 `sources/revisions.yaml` 临时获取三个固定版本的上游源码、执行学习状态与证据链接测试、内容与 TypeScript 校验，并以 `/memory-base/` 为路径构建和发布 `dist/`。也可以在仓库 Actions 中手动触发。
 
 `refernece/` 仍不提交、不推送，也不包含在发布产物中。CI 获取源码只用于校验版本和文件路径，不安装或执行上游项目。日常拉取最新代码与更新文档的研究基线分别管理。
 
@@ -62,6 +66,8 @@ git clone https://github.com/agentscope-ai/ReMe.git refernece/ReMe
 git -C refernece/ReMe checkout --detach d323356e6f11c0faf4bf30fae7a2edc30e18fbb9
 git clone https://github.com/mem0ai/mem0.git refernece/mem0
 git -C refernece/mem0 checkout --detach ed1f10fc87080f0b67f99be370817504888462ab
+git clone https://github.com/letta-ai/letta-code.git refernece/letta-code
+git -C refernece/letta-code checkout --detach e6d6cc27ef1111da80e919dc1cef179613894b66
 ```
 
 日常获取新代码使用：
@@ -70,7 +76,7 @@ git -C refernece/mem0 checkout --detach ed1f10fc87080f0b67f99be370817504888462ab
 python3 scripts/update-references.py
 ```
 
-脚本对两个项目fetch最新main，并在 `refernece/latest/ReMe/`、`refernece/latest/mem0/` 创建或快进独立的Git worktree。原研究目录和 `sources/revisions.yaml` 保持固定；严格构建仍核对研究目录的HEAD。遇到本地修改、路径不符、并发运行或历史分叉会报错，不强制重置或覆盖。脚本不安装依赖、不执行上游代码，也不自动改研究结论。
+脚本对ReMe、Mem0与Letta Code获取最新main，并在 `refernece/latest/ReMe/`、`refernece/latest/mem0/`、`refernece/latest/letta-code/` 创建或快进独立的Git worktree。原研究目录和 `sources/revisions.yaml` 保持固定；严格构建仍核对研究目录的HEAD。遇到本地修改、路径不符、并发运行或历史分叉会报错，不强制重置或覆盖。脚本不安装依赖、不执行上游代码，也不自动改研究结论。
 
 当前机器已设置每天北京时间09:00运行该脚本的Codex本地定时任务；任务依赖本机和Codex处于运行状态。定时配置属于当前机器，不会随Git仓库自动安装到其他机器。
 
@@ -94,13 +100,13 @@ Memory Base 规划四个阅读入口，共用同一批文章与来源：
 
 ## 第一批研究对象
 
-已覆盖ReMe与Mem0的源码主线和首批比较，运行验收仍需按上述范围补充。后续逐步引入其他项目；下表不构成行业完整名单，尚未研究项目仅列候选问题。
+已覆盖ReMe、Mem0与当前Letta Code的源码主线、双项目和三方比较，运行验收仍需按上述范围补充。后续逐步引入其他项目；下表不构成行业完整名单，尚未研究项目仅列候选问题。
 
 | 项目 | 希望验证的问题 | 计划顺序 |
 | --- | --- | --- |
 | [ReMe](https://github.com/agentscope-ai/ReMe) | 经历、记忆文件、整理任务与检索索引如何衔接？哪些数据是事实来源，哪些可以重建？ | 已完成源码主线 |
 | [Mem0](https://github.com/mem0ai/mem0) | 记忆提取、增删改决策、作用域与检索如何实现？SDK 与服务分别承担什么？ | 已完成源码主线与对比 |
-| [Letta](https://github.com/letta-ai/letta) | Agent 运行时如何管理可见记忆？模型主动管理记忆时，宿主保留哪些控制权？ | 后续扩展 |
+| [Letta Code](https://github.com/letta-ai/letta-code) | MemFS已提交core怎样进入模型，渐进读取与历史检索如何分工？本地与Cloud边界在哪里？ | 已完成源码主线与三方比较 |
 | [Graphiti](https://github.com/getzep/graphiti) | 事件如何形成实体与关系？如何表达时间、事实变化及其来源？ | 后续扩展 |
 | [MemOS](https://github.com/MemTensor/MemOS) | 记忆如何组织、调度和持久化？不同表示与生命周期如何协作？ | 后续扩展 |
 | [LangMem](https://github.com/langchain-ai/langmem) | 记忆提取与维护如何嵌入应用运行时？运行时、存储层与应用各自负责什么？ | 后续扩展 |
@@ -138,7 +144,7 @@ Memory Base 规划四个阅读入口，共用同一批文章与来源：
 
 建议把研究正文保存为 Markdown，把阅读顺序放进课程目录，由构建过程生成网页数据。网页是这些内容的阅读入口，避免另外维护一份完整正文。
 
-以下为内容组织结构。ReMe、Mem0、基础页、比较、实验与网页已创建；其他项目将在后续研究中加入：
+以下为内容组织结构。ReMe、Mem0、Letta、基础页、比较、实验与网页已创建；其他项目将在后续研究中加入：
 
 ```text
 memory-base/
@@ -156,7 +162,7 @@ memory-base/
 │   │   │   ├── 03-write-path.md
 │   │   │   └── questions/           # 从主线继续拆出的具体问题
 │   │   ├── mem0/
-│   │   ├── letta/
+│   │   ├── letta/                    # 当前letta-code实现，非旧archive
 │   │   ├── graphiti/
 │   │   ├── memos/
 │   │   └── langmem/
@@ -170,7 +176,8 @@ memory-base/
 ├── web/                             # 静态阅读站，搜索、目录、来源和图解
 └── refernece/
     ├── ReMe/                         # 独立上游工作副本，Git忽略
-    └── mem0/                         # 独立上游工作副本，Git忽略
+    ├── mem0/                         # 独立上游工作副本，Git忽略
+    └── letta-code/                   # 当前Letta实现，Git忽略
 ```
 
 文章使用稳定 ID。ID 不依赖中文标题或目录排序，后续调整标题时仍保留原有链接。
@@ -200,7 +207,7 @@ memory-base/
 
 文章元数据包含 `id`、`title`、`project`、`prerequisites`、`status` 和 `sources`。单项目文章的sources可使用路径字符串；比较文章使用 `project: comparison`、`projects: [reme, mem0]`，每个source显式包含 `project` 与 `path`，分别按对应commit核验。参见 [比较模板](templates/comparison.md)。目录只引用文章ID与排序，构建时检查ID唯一性、引用、项目版本和文件是否存在。
 
-阅读记录与研究证据分开：打开页面仅表示访问过；“能够讲清楚”需要主动确认。学习进度不改变文章的核验状态，也不默认引入账号或云同步。
+阅读记录与研究证据分开：打开页面仅表示访问过；“已知道”由用户主动勾选。学习进度不改变文章核验状态，不引入账号或云同步；存储范围是同一浏览器的同一站点。
 
 ## 证据与实验约定
 
@@ -214,7 +221,7 @@ memory-base/
 | 推断 | 根据已有证据解释设计原因或潜在影响，明确推导依据 |
 | 待验证 | 有具体问题，但证据尚不足，不进入确定性比较结论 |
 
-源码链接固定到 commit，附文件路径和关键符号。记录核验日期、启用配置、依赖版本，以及实际阅读或运行的范围。上游更新后按变更重新核验，不仅修改日期。
+源码链接固定到commit，附文件路径和关键符号。三方比较的每个矩阵单元格给直接支持该判断的源码证据，经多agent只读交叉审阅。构建器检查链接所用仓库、完整SHA与文件是否属于固定Git树；这些结构检查不能代替逐结论的语义核验。记录核验日期、启用配置、依赖版本，以及实际阅读或运行的范围。上游更新后按变更重新核验，不仅修改日期。
 
 实验优先使用可共享的合成数据，每次保留输入、预期、实际结果、运行方式和对应 revision。首批用例围绕同一段项目协作展开：
 
@@ -237,4 +244,4 @@ memory-base/
 | 3 · 第二项目 | Mem0 拆解与首份横向比较 | 两个项目使用共同输入，能解释机制差异、代价与适用条件 |
 | 4 · 扩展研究 | 按问题引入其他项目 | 每加入一个项目，都带来已有样本无法解释的新设计；维护版本基线与失效证据 |
 
-当前已交付阶段0、两个项目的源码主线、阶段2阅读站和阶段3的源码比较。完整运行时与真实模型实验尚未完成。下一步固定两边模型、后端、输入与预算，先验证重复提交与事实更正，再观察实际检索和上下文供给；之后按问题引入Letta或Graphiti。历次基线、分工、失败及验收记录见 [研究记录](sources/research-log.md)。
+当前已交付三个项目的源码主线、阅读站、双项目与三方源码比较。完整运行时与真实模型实验尚未完成。下一步固定两边模型、后端、输入与预算，先验证重复提交与事实更正，再观察实际检索和上下文供给；之后按问题引入Graphiti或其他设计。历次基线、分工、失败及验收记录见 [研究记录](sources/research-log.md)。

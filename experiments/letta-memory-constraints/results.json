@@ -1,0 +1,114 @@
+{
+  "revision": "e6d6cc27ef1111da80e919dc1cef179613894b66",
+  "executed_at": "2026-11-04T15:34:12.141Z",
+  "environment": {
+    "node": "v22.23.4",
+    "platform": "darwin",
+    "typescript": "5.9.3"
+  },
+  "scope": "Three unchanged upstream TypeScript helper modules transpiled to CommonJS in a temporary directory; synthetic file trees only. No Letta process, Git hooks, Cloud, providers, AppServer, real prompt compilation or model calls.",
+  "results": [
+    {
+      "case": "v2-index-frontmatter-free",
+      "passed": true,
+      "observed": []
+    },
+    {
+      "case": "v2-index-frontmatter-rejected",
+      "passed": true,
+      "observed": "must not have frontmatter"
+    },
+    {
+      "case": "v2-file-valid-scalars",
+      "passed": true,
+      "observed": []
+    },
+    {
+      "case": "v2-file-missing-description",
+      "passed": true,
+      "observed": "missing required field 'description'"
+    },
+    {
+      "case": "v2-duplicate-key-rejected",
+      "passed": true,
+      "observed": "duplicate frontmatter key 'name'"
+    },
+    {
+      "case": "v2-empty-quoted-name-rejected",
+      "passed": true,
+      "observed": "'name' must not be empty"
+    },
+    {
+      "case": "legacy-read-only-protected-by-previous-content",
+      "passed": true,
+      "observed": "file is read_only"
+    },
+    {
+      "case": "v2-root-markdown-is-core",
+      "passed": true,
+      "observed": true
+    },
+    {
+      "case": "v2-child-markdown-is-deferred",
+      "passed": true,
+      "observed": false
+    },
+    {
+      "case": "v2-projection-requires-parent-index",
+      "passed": true,
+      "observed": false
+    },
+    {
+      "case": "v2-projection-with-parent-index",
+      "passed": true,
+      "observed": true
+    },
+    {
+      "case": "v2-skills-excluded-from-memory-projection",
+      "passed": true,
+      "observed": false
+    },
+    {
+      "case": "tree-requires-root-index",
+      "passed": true,
+      "observed": "root memory index is required"
+    },
+    {
+      "case": "tree-requires-directory-index",
+      "passed": true,
+      "observed": "missing required index projects/MEMORY.md"
+    },
+    {
+      "case": "unicode-codepoints-within-budget",
+      "passed": true,
+      "observed": []
+    },
+    {
+      "case": "unicode-codepoints-over-budget",
+      "passed": true,
+      "observed": "3 characters exceeds 2"
+    },
+    {
+      "case": "core-combined-budget",
+      "passed": true,
+      "observed": "core memory: 6 characters exceeds 5"
+    },
+    {
+      "case": "read-only-policy-needs-accepted-tree",
+      "passed": true,
+      "observed": "rejected"
+    },
+    {
+      "case": "read-only-policy-rejects-changed-file",
+      "passed": true,
+      "observed": "read-only file cannot be created, changed or removed"
+    },
+    {
+      "case": "config-rejects-traversal-glob",
+      "passed": true,
+      "observed": "rejected"
+    }
+  ],
+  "passed": 20,
+  "total": 20
+}

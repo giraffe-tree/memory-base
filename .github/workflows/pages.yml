@@ -31,6 +31,8 @@ jobs:
         run: npm ci
       - name: Fetch pinned source revisions for verification
         run: npm run sources:prepare
+      - name: Test learning records and evidence links
+        run: npm test
       - name: Configure Pages
         id: pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5

@@ -24,6 +24,28 @@ async function yamlFile(p, fallback, strict) {
 }
 const escape = text => String(text).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 
+export function parsePinnedSourceHref(href, projects) {
+  let url;
+  try { url = new URL(href); } catch { return null; }
+  let repository, commit, sourcePath;
+  const parts = url.pathname.split('/').filter(Boolean);
+  if (url.hostname === 'github.com' && parts[2] === 'blob') {
+    repository = `https://github.com/${parts[0]}/${parts[1]}`;
+    commit = parts[3]; sourcePath = parts.slice(4);
+  } else if (url.hostname === 'raw.githubusercontent.com') {
+    repository = `https://github.com/${parts[0]}/${parts[1]}`;
+    commit = parts[2]; sourcePath = parts.slice(3);
+  } else return null;
+  const entry = Object.entries(projects).find(([, source]) => source.repository?.toLowerCase() === repository.toLowerCase());
+  if (!entry) return { error: `正文源码仓库未登记基线 ${repository}` };
+  const [projectId, source] = entry;
+  if (!/^[a-f0-9]{40}$/.test(commit || '') || commit !== source.commit) return { error: `正文源码链接版本漂移 ${href}` };
+  try { sourcePath = sourcePath.map(decodeURIComponent).join('/'); }
+  catch { return { error: `正文源码路径编码无效 ${href}` }; }
+  if (!sourcePath) return { error: `正文源码缺少文件路径 ${href}` };
+  return { projectId, path: sourcePath };
+}
+
 export async function buildCourse({ strict = true } = {}) {
   const catalog = await yamlFile('curriculum/catalog.yaml', { groups: [] }, strict);
   const revision = await yamlFile('sources/revisions.yaml', { projects: {} }, strict);
@@ -31,6 +53,32 @@ export async function buildCourse({ strict = true } = {}) {
     .filter(p => p.endsWith('.md') && (!p.includes(`${path.sep}experiments${path.sep}`) || path.basename(p) === 'README.md'));
   const lessons = [];
   const errors = [];
+  const sourceChecks = new Map();
+  async function validateSourcePath(projectId, sourcePath) {
+    const key = `${projectId}:${sourcePath}`;
+    if (!sourceChecks.has(key)) sourceChecks.set(key, (async () => {
+      const source = revision.projects[projectId];
+      if (!source || typeof source.local_path !== 'string') return `缺少项目版本 ${projectId}`;
+      const checkout = path.resolve(root, source.local_path);
+      const resolved = path.resolve(checkout, sourcePath);
+      if (!resolved.startsWith(checkout + path.sep)) return `来源越界 ${sourcePath}`;
+      try {
+        if (!(await fs.stat(resolved)).isFile()) return `来源不是文件 ${sourcePath}`;
+        await promisify(execFile)('git', ['-C', checkout, 'cat-file', '-e', `${source.commit}:${sourcePath}`]);
+      } catch { return `固定版本中来源不存在 ${projectId}/${sourcePath}`; }
+      return null;
+    })());
+    return sourceChecks.get(key);
+  }
+  async function validateBodySource(href, lesson) {
+    const ref = parsePinnedSourceHref(href, revision.projects);
+    if (!ref) return;
+    if (ref.error) { errors.push(`${lesson.id}: ${ref.error}`); return; }
+    const { projectId, path: sourcePath } = ref;
+    if (!lesson.projects.includes(projectId)) errors.push(`${lesson.id}: 正文来源项目未声明 ${projectId}`);
+    const error = await validateSourcePath(projectId, sourcePath);
+    if (error) errors.push(`${lesson.id}: 正文${error}`);
+  }
   const statuses = new Set(['source_verified', 'experiment_verified', 'official', 'inferred', 'pending']);
   for (const [id, source] of Object.entries(revision.projects || {})) {
     if (!source || typeof source !== 'object') { errors.push(`${id}: 项目版本元数据无效`); continue; }
@@ -71,10 +119,8 @@ export async function buildCourse({ strict = true } = {}) {
       if (!declaredProjects.includes(ref.project)) errors.push(`${p}: 来源项目未在 projects 声明 ${ref.project}`);
       const source = revision.projects[ref.project];
       if (!source || typeof source.local_path !== 'string') continue;
-      const resolved = path.resolve(root, source.local_path, ref.path);
-      if (!resolved.startsWith(path.resolve(root, source.local_path) + path.sep)) errors.push(`${p}: 来源越界 ${ref.path}`);
-      else try { if (!(await fs.stat(resolved)).isFile()) errors.push(`${p}: 来源不是文件 ${ref.path}`); }
-      catch { errors.push(`${p}: 来源不存在 ${ref.project}/${ref.path}`); }
+      const sourceError = await validateSourcePath(ref.project, ref.path);
+      if (sourceError) errors.push(`${p}: ${sourceError}`);
       normalizedSources.push({ project: ref.project, path: ref.path });
     }
     for (const id of declaredProjects) if (!normalizedSources.some(ref => ref.project === id)) errors.push(`${p}: 缺少 ${id} 的源码来源`);
@@ -98,6 +144,10 @@ export async function buildCourse({ strict = true } = {}) {
   if (strict && errors.length) throw new Error(`内容检查失败：\n${errors.join('\n')}`);
   for (const l of lessons) {
     const headings = [];
+    const bodySourceLinks = [];
+    const sourceLexer = new Marked();
+    sourceLexer.walkTokens(sourceLexer.lexer(l.content), token => { if ((token.type === 'link' || token.type === 'image') && token.href) bodySourceLinks.push(token.href); });
+    await Promise.all([...new Set(bodySourceLinks)].map(href => validateBodySource(href, l)));
     let headingIndex = 0;
     const parser = new Marked({
       gfm: true,
@@ -126,6 +176,10 @@ export async function buildCourse({ strict = true } = {}) {
       allowedAttributes: { ...sanitizeHtml.defaults.allowedAttributes, '*': ['id', 'class'], a: ['href', 'title', 'target', 'rel'], input: ['type', 'checked', 'disabled'] },
       allowedSchemes: ['http', 'https', 'mailto'],
     });
+    // Raw HTML links do not appear as Markdown link tokens; validate the
+    // sanitized rendered anchors too so HTML cannot bypass source pinning.
+    const renderedLinks = [...l.html.matchAll(/\bhref="([^"]+)"/g)].map(match => match[1].replaceAll('&amp;', '&'));
+    await Promise.all([...new Set(renderedLinks)].filter(href => !bodySourceLinks.includes(href)).map(href => validateBodySource(href, l)));
     l.headings = headings;
     l.search = `${l.title} ${l.summary} ${l.content}`.replace(/[#*`>\[\]]/g, '').toLocaleLowerCase();
     delete l.content;
