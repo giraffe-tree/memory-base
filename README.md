@@ -8,6 +8,10 @@
 
 ## 打开学习手册
 
+**在线阅读：[https://giraffe-tree.github.io/memory-base/](https://giraffe-tree.github.io/memory-base/)**
+
+网页由 GitHub Pages 托管，打开即可阅读，无需安装开发环境。本地运行：
+
 在仓库根目录使用 Node.js 22（`.nvmrc` 固定到 22.23.4）：
 
 ```bash
@@ -39,7 +43,15 @@ python3 experiments/configuration-boundaries/run.py
 python3 experiments/mem0-local-boundaries/run.py
 ```
 
-前两个命令检查文章ID、目录、先修、各项目Git HEAD、源码文件、元数据、TypeScript和静态构建。ReMe局部实验需PyYAML、Pydantic；Mem0局部实验只用Python标准库。两者环境、加载方式与结果分别保存在实验目录，局部通过不代表完整依赖安装兼容性。构建产物为 `dist/`，可静态托管；当前只提供本地站点，没有发布到外部服务。
+前两个命令检查文章ID、目录、先修、各项目Git HEAD、源码文件、元数据、TypeScript和静态构建。ReMe局部实验需PyYAML、Pydantic；Mem0局部实验只用Python标准库。两者环境、加载方式与结果分别保存在实验目录，局部通过不代表完整依赖安装兼容性。构建产物为 `dist/`，由 GitHub Pages 托管。
+
+## GitHub Pages 发布
+
+推送到 `main` 后，[Pages 工作流](.github/workflows/pages.yml) 自动安装锁定依赖、根据 `sources/revisions.yaml` 临时获取固定版本的上游源码、执行内容与 TypeScript 校验，并以 `/memory-base/` 为路径构建和发布 `dist/`。也可以在仓库 Actions 中手动触发。
+
+`refernece/` 仍不提交、不推送，也不包含在发布产物中。CI 获取源码只用于校验版本和文件路径，不安装或执行上游项目。日常拉取最新代码与更新文档的研究基线分别管理。
+
+新机器在 `npm ci` 后可以运行 `npm run sources:prepare` 准备研究源码；已有目录版本不符或包含修改时，该命令会失败并保留现场。
 
 ## 获取与每日更新源码
 

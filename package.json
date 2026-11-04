@@ -7,6 +7,7 @@
     "node": ">=22.13.0"
   },
   "scripts": {
+    "sources:prepare": "node scripts/prepare-sources.mjs",
     "dev": "vite --host 127.0.0.1 --port 8770 --strictPort",
     "build": "node scripts/build-content.mjs && tsc --noEmit && vite build",
     "check": "node scripts/build-content.mjs && tsc --noEmit",
