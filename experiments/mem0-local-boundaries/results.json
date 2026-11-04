@@ -1,0 +1,125 @@
+{
+  "revision": "ed1f10fc87080f0b67f99be370817504888462ab",
+  "executed_at": "2026-11-04T20:13:45.809940+08:00",
+  "environment": {
+    "python": "3.11.12",
+    "platform": "Darwin",
+    "sqlite": "3.43.2"
+  },
+  "scope": "Direct unchanged imports of scoring.py and storage.py; explicit synthetic ranking signals and temporary SQLite DB. No providers, model, telemetry, NLP model loading, Memory construction, vector backend or hosted service.",
+  "results": [
+    {
+      "case": "bm25-midpoint-normalizes-to-half",
+      "passed": true,
+      "observed": 0.5
+    },
+    {
+      "case": "query-length-parameters-without-NLP",
+      "passed": true,
+      "observed": [
+        [
+          5.0,
+          0.7
+        ],
+        [
+          7.0,
+          0.6
+        ]
+      ]
+    },
+    {
+      "case": "semantic-threshold-gates-before-boosts",
+      "passed": true,
+      "observed": []
+    },
+    {
+      "case": "keyword-only-ID-not-added-as-candidate",
+      "passed": true,
+      "observed": [
+        "semantic"
+      ]
+    },
+    {
+      "case": "semantic-only-score-unchanged",
+      "passed": true,
+      "observed": 0.8
+    },
+    {
+      "case": "three-signal-score-normalized",
+      "passed": true,
+      "observed": 0.76
+    },
+    {
+      "case": "keyword-signal-changes-ranking",
+      "passed": true,
+      "observed": [
+        "a",
+        "b"
+      ]
+    },
+    {
+      "case": "active-signal-map-changes-denominator",
+      "passed": true,
+      "observed": 0.4
+    },
+    {
+      "case": "top-k-limits-results",
+      "passed": true,
+      "observed": 1
+    },
+    {
+      "case": "explain-scores-without-mutating-input",
+      "passed": true,
+      "observed": 2.5
+    },
+    {
+      "case": "history-keeps-add-update-delete-sequence",
+      "passed": true,
+      "observed": [
+        "ADD",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "case": "deleted-history-retains-old-memory",
+      "passed": true,
+      "observed": [
+        "Rust",
+        true
+      ]
+    },
+    {
+      "case": "sqlite-history-batch-failure-rolls-back",
+      "passed": true,
+      "observed": 0
+    },
+    {
+      "case": "recent-message-cache-capped-at-ten",
+      "passed": true,
+      "observed": 10
+    },
+    {
+      "case": "message-scopes-kept-separate",
+      "passed": true,
+      "observed": [
+        "beta-only"
+      ]
+    },
+    {
+      "case": "message-save-appends-identical-content",
+      "passed": true,
+      "observed": 2
+    },
+    {
+      "case": "history-and-cache-survive-reopen",
+      "passed": true,
+      "observed": [
+        3,
+        10
+      ]
+    }
+  ],
+  "passed": 17,
+  "total": 17
+}

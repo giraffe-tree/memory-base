@@ -1,0 +1,66 @@
+groups:
+- id: foundations
+  title: 从零开始
+  description: 从模型眼前的材料，到经历如何成为可用的记忆。
+  lessons:
+  - foundations.start.agent
+  - foundations.start.context
+  - foundations.start.memory
+  - foundations.start.reme
+  - foundations.start.files
+  - foundations.start.daily
+  - foundations.start.digest
+  - foundations.start.recall
+  - foundations.start.mem0
+- id: reme-core
+  title: ReMe · 数据与主链路
+  description: 沿着入口、记忆模型、写入、存储与检索追踪源码。
+  lessons:
+  - projects.reme.overview
+  - projects.reme.memory-model
+  - projects.reme.write-path
+  - projects.reme.storage-index
+  - projects.reme.retrieval-context
+- id: reme-engineering
+  title: ReMe · 生命周期与边界
+  description: 理解整理、恢复、接入、评测和采用条件。
+  lessons:
+  - projects.reme.updates-forgetting
+  - projects.reme.runtime-consistency
+  - projects.reme.integration-isolation
+  - projects.reme.evaluation-observability
+  - projects.reme.cost-adoption
+- id: mem0-core
+  title: Mem0 · 数据与主链路
+  description: 以当前 Python OSS 为主线，拆开 ADD-only 写入与多信号检索。
+  lessons:
+  - projects.mem0.overview
+  - projects.mem0.memory-model
+  - projects.mem0.write-path
+  - projects.mem0.storage-index
+  - projects.mem0.retrieval-context
+- id: mem0-engineering
+  title: Mem0 · 生命周期与边界
+  description: 追踪显式更新删除、同步异步、协议作用域、评测和成本。
+  lessons:
+  - projects.mem0.updates-forgetting
+  - projects.mem0.runtime-consistency
+  - projects.mem0.integration-isolation
+  - projects.mem0.evaluation-observability
+  - projects.mem0.cost-adoption
+- id: comparisons
+  title: 横向比较 · ReMe × Mem0
+  description: 沿相同问题比较状态归属、写入、更正与检索，不混用两套实现。
+  lessons:
+  - comparisons.architecture-map
+  - comparisons.write-path
+  - comparisons.fact-updates
+  - comparisons.retrieval-context
+- id: experiments
+  title: 实验与待验证问题
+  description: 已运行的局部实验，与仍需模型或完整运行时验证的边界。
+  lessons:
+  - experiments.configuration-boundaries
+  - experiments.duplicate-write
+  - experiments.fact-updates
+  - experiments.mem0-local-boundaries

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f6f2" />
+    <meta name="description" content="从一段经历开始，沿源码读懂 Agent Memory。ReMe 与 Mem0 架构研究、横向比较、知识点手册与可复现实验。" />
+    <title>Memory Base · 记忆架构学习手册</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23bd4934'/%3E%3Ctext x='13' y='44' font-size='40' font-family='Georgia' fill='%23fff'%3Em%3C/text%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <a class="skip" href="#content">跳到正文</a>
+    <header class="topbar">
+      <a class="brand" href="#/overview"><span class="brand-mark">m<span>·</span>b</span><span>Memory Base<small>AGENT MEMORY FIELD NOTES</small></span></a>
+      <div class="top-note"><span class="live-dot"></span>从一段经历，走到下一次行动</div>
+      <div class="header-actions"><button id="progress-open" class="quiet">学习记录 <span id="progress-count">0</span></button><button id="menu" class="menu quiet" aria-expanded="false" aria-controls="sidebar">目录 ☰</button></div>
+    </header>
+    <div class="layout">
+      <aside id="sidebar" class="sidebar" aria-label="知识点目录">
+        <a class="sidebar-home" href="#/overview"><span class="eyebrow">YOUR KNOWLEDGE MAP</span><p>先看到全貌，<br>再走进每个细节。</p></a>
+        <label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" aria-label="搜索知识点" placeholder="找一个知识点…" /><kbd>/</kbd></label>
+        <div class="project-filters" role="group" aria-label="按项目筛选"><button data-project-filter="all" aria-pressed="true">全部</button><button data-project-filter="reme" aria-pressed="false">ReMe</button><button data-project-filter="mem0" aria-pressed="false">Mem0</button><button data-project-filter="comparison" aria-pressed="false">对比</button></div>
+        <p class="filter-note">公共基础概念在各筛选中保留</p>
+        <p id="search-status" class="sr-only" role="status"></p>
+        <nav id="course-nav"></nav>
+        <div class="sidebar-foot"><span>▧</span><p><strong id="lesson-count">知识点目录</strong><small>看过 ≠ 能够讲清楚</small></p></div>
+      </aside>
+      <button id="scrim" class="scrim" aria-label="关闭目录" hidden></button>
+      <main id="content" tabindex="-1"></main>
+    </div>
+    <dialog id="progress-dialog"><button id="progress-close" class="dialog-close quiet" aria-label="关闭学习记录">✕</button><div class="eyebrow">YOUR LEARNING RECORD</div><h2>学过的，要能讲出来。</h2><p class="dialog-lead">阅读不会自动完成知识点。请在能解释机制与边界后，主动确认。</p><div id="progress-content"></div><p class="small-note">记录只保存在当前浏览器，不上传、不云同步。</p><button id="progress-reset" class="quiet reset">清除本机学习记录</button></dialog>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="/main.ts"></script>
+  </body>
+</html>

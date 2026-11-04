@@ -1,0 +1,90 @@
+{
+  "revision": "d323356e6f11c0faf4bf30fae7a2edc30e18fbb9",
+  "executed_at": "2026-11-04T19:28:49.981740+08:00",
+  "environment": {
+    "python": "3.11.12",
+    "platform": "Darwin",
+    "pydantic": "2.11.7",
+    "PyYAML": "6.0.3"
+  },
+  "scope": "Unchanged upstream configuration parser, public application schema and file-path helpers, imported in isolated namespace packages; no model, no service, no full ReMe dependency installation.",
+  "results": [
+    {
+      "case": "default-keyword-without-vector",
+      "passed": true,
+      "observed": [
+        "bm25",
+        ""
+      ]
+    },
+    {
+      "case": "dream-window-and-unit-defaults",
+      "passed": true,
+      "observed": [
+        2,
+        5
+      ]
+    },
+    {
+      "case": "disable-cron-preserves-manual-job",
+      "passed": true,
+      "observed": [
+        false,
+        true,
+        true
+      ]
+    },
+    {
+      "case": "leading-zero-ID-remains-string",
+      "passed": true,
+      "observed": "007"
+    },
+    {
+      "case": "nested-value-collision-rejected",
+      "passed": true,
+      "observed": "already a value"
+    },
+    {
+      "case": "undefined-environment-rejected",
+      "passed": true,
+      "observed": "undefined env var"
+    },
+    {
+      "case": "absolute-session-dir-rejected",
+      "passed": true,
+      "observed": "workspace-relative"
+    },
+    {
+      "case": "relative-path-stays-in-workspace",
+      "passed": true,
+      "observed": null
+    },
+    {
+      "case": "parent-traversal-rejected",
+      "passed": true,
+      "observed": null
+    },
+    {
+      "case": "symlink-escape-rejected",
+      "passed": true,
+      "observed": null
+    },
+    {
+      "case": "empty-allowlist-fails-closed",
+      "passed": true,
+      "observed": false
+    },
+    {
+      "case": "path-prefix-collision-denied",
+      "passed": true,
+      "observed": false
+    },
+    {
+      "case": "allowed-directory-descendant-accepted",
+      "passed": true,
+      "observed": true
+    }
+  ],
+  "passed": 13,
+  "total": 13
+}

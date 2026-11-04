@@ -1,0 +1,17 @@
+projects:
+  reme:
+    repository: https://github.com/agentscope-ai/ReMe
+    commit: d323356e6f11c0faf4bf30fae7a2edc30e18fbb9
+    verified_on: '2026-11-04'
+    local_path: refernece/ReMe
+    revision_time: '2026-11-04T15:25:11+08:00'
+    scope: Application、默认配置、AutoMemory、Dream、FileStore、Search、服务接入及相关单元测试的定向源码阅读；不代表全仓审计或端到端模型验证
+    display_name: ReMe
+  mem0:
+    display_name: Mem0
+    repository: https://github.com/mem0ai/mem0
+    commit: ed1f10fc87080f0b67f99be370817504888462ab
+    verified_on: '2026-11-04'
+    local_path: refernece/mem0
+    revision_time: '2026-11-04T18:55:26+08:00'
+    scope: Python OSS Memory/AsyncMemory、默认配置、写入/检索/显式更新删除、SQLite/实体collection、自托管REST与HostedClient边界及相关测试的定向源码阅读；不代表托管服务实现或完整模型实测
