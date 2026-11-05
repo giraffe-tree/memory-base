@@ -1,0 +1,584 @@
+[
+  {
+    "lesson": "foundations.start.agent",
+    "title": "工具请求怎样变成真实行动？",
+    "object": "三个并排检验工位各放一张卡片，依次检查模型提议、程序执行与返回观察；这是概念示意。",
+    "kind": "bench",
+    "steps": [
+      {
+        "label": "提出行动",
+        "detail": "模型可以提出写笔记的工具请求，但这个输出尚未证明文件存在。ReMe 的 AgentScope wrapper 为可用 Job 建立工具，让模型在宿主提供的能力范围内选择行动。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/components/agent_wrapper/as_agent_wrapper.py"
+        ]
+      },
+      {
+        "label": "程序执行",
+        "detail": "工具闭包把参数交给 Job，由程序执行步骤并生成 Response。若它们位于同一应用，这条路径可以是进程内异步调用，不能仅凭工具调用便认定发生 HTTP 或 MCP 请求。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/components/agent_wrapper/as_agent_wrapper.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/components/job/base_job.py"
+        ]
+      },
+      {
+        "label": "交还观察",
+        "detail": "wrapper 把业务状态及 answer 转成工具结果，让模型决定继续还是结束。判断任务完成应检查程序结果与实际产物，而不是把模型说出的“已完成”当成文件落盘证据。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/components/agent_wrapper/as_agent_wrapper.py"
+        ]
+      }
+    ],
+    "boundary": "工具集合与宿主限制共同决定权限；图示调用结构，不保证模型每次选择正确。"
+  },
+  {
+    "lesson": "foundations.start.context",
+    "title": "保存过，不等于这次看得到",
+    "object": "三座双层档案架分别对照外部材料、选择与压缩、本次输入，强调可见范围不同；这是概念示意。",
+    "kind": "cabinet",
+    "steps": [
+      {
+        "label": "外部材料",
+        "detail": "外部文件和既有消息不会仅因被保存，就自动进入下一次模型请求。ReMe wrapper 接收宿主组织的消息及工具集合；具体带入哪些内容，需要沿实际调用参数追踪。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/components/agent_wrapper/as_agent_wrapper.py"
+        ]
+      },
+      {
+        "label": "选择与压缩",
+        "detail": "CompactContextStep 处理当前消息中的工具调用与结果对，为可缩减结果生成可恢复预览。这是在控制眼前材料，不是把来源历史改写成长久知识，也不会直接改写原始来源历史。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/compaction/compact_context.py"
+        ]
+      },
+      {
+        "label": "本次模型输入",
+        "detail": "最终供给模型的是此次装配的消息。压缩预算要求宿主提供 token_counter；若材料受保护或没有可缩减内容，步骤仍可能无法满足预算，不能把参数当作请求硬保证。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/components/agent_wrapper/as_agent_wrapper.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/compaction/compact_context.py"
+        ]
+      }
+    ],
+    "boundary": "概念图不代表三套独立存储；可见性要核对本次请求，长期记忆与上下文压缩也不是同一状态。"
+  },
+  {
+    "lesson": "foundations.start.memory",
+    "title": "记忆需要保存、整合与找回",
+    "object": "三座双层档案架分别对应保存经历、整合知识与找回使用，展示概念职责而非同步副本。",
+    "kind": "cabinet",
+    "steps": [
+      {
+        "label": "保存经历",
+        "detail": "AutoMemory 提示词要求记录持久事实、决定、当前状态和可复用步骤。选择哪些信息包含模型判断；历史事件、当前状态与通用经验，应保留各自的时间和语境。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/auto_memory.yaml"
+        ]
+      },
+      {
+        "label": "整合知识",
+        "detail": "Dream Integrate 结合已有 digest 整合知识单元，可创建、佐证、细化或纠正文件内容。它不是简单复制最后一句话，也没有替自然语言事实建立数据库级真实性约束。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/dream/integrate.py"
+        ]
+      },
+      {
+        "label": "找回并使用",
+        "detail": "Search 通过查询召回、排序并返回来源片段，供宿主或 Agent 继续阅读。分数是排序信号而非正确率；找到的旧经验仍需核对适用范围、时间和后续更正。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/index/search.py"
+        ]
+      }
+    ],
+    "boundary": "这是外部数据的组织与供给；写入文件不会自动训练模型，记忆数量也不等于质量。"
+  },
+  {
+    "lesson": "foundations.start.reme",
+    "title": "宿主、运行时与工作区如何分工？",
+    "object": "三个并排检验工位分别核对宿主接线、运行时调度与工作区状态，每个工位由托盘和量规构成。",
+    "kind": "bench",
+    "steps": [
+      {
+        "label": "宿主接线",
+        "detail": "宿主决定何时交付会话、选择工作区与何时查询。Application 提供 Job 调度入口，但安装和启动 ReMe 本身，不会替外部聊天应用接好所有记忆生命周期。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/application.py"
+        ]
+      },
+      {
+        "label": "运行时调度",
+        "detail": "Application 将配置解析为组件、Job 和服务，管理依赖及生命周期。默认配置把 AutoMemory、Search、监听与 Dream 组织为不同工作流，分别承担记录、查找和维护责任。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/application.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/config/default.yaml"
+        ]
+      },
+      {
+        "label": "工作区持久状态",
+        "detail": "配置为 session、daily、digest、metadata 等目录指定职责。当前默认 embedding_store 为空，主要启用 BM25 与标签；可选向量能力不能被画成每次调用的必经步骤。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/schema/application_config.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/config/default.yaml"
+        ]
+      }
+    ],
+    "boundary": "图示表示职责，不是真实部署拓扑；文件本地保存不保证配置的模型调用完全离线。"
+  },
+  {
+    "lesson": "foundations.start.files",
+    "title": "正文、索引与回执为何不能混清？",
+    "object": "三座双层档案架分别对照正文、派生查找状态与文件操作边界，各层有不同恢复和删除后果。",
+    "kind": "cabinet",
+    "steps": [
+      {
+        "label": "正文文件",
+        "detail": "工作区把来源会话、daily、digest 与记忆 Agent 会话分目录组织。它们承担不同职责；mem_session 即使也是 JSONL，也不能替代 session/dialog 中的用户来源会话。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/schema/application_config.py"
+        ]
+      },
+      {
+        "label": "派生查找状态",
+        "detail": "LocalFileStore 组合分块、图与搜索索引，为文件提供查找表示。修复时应先确定损坏层；“可派生”不代表清空任何 metadata 都能无损恢复全部处理协议状态。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/components/file_store/local_file_store.py"
+        ]
+      },
+      {
+        "label": "文件操作边界",
+        "detail": "路径解析把目标限制在 workspace，并可检查允许路径。文件可编辑、路径受限与用户身份鉴权是不同问题；恢复时还需考虑成功请求回执与处理水位各自参与的协议。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/file_io/_path.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/auto_memory.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/dream/finish.py"
+        ]
+      }
+    ],
+    "boundary": "文件边界不是多租户权限系统；正文更正、索引更新与查询看到新值，需要分别观察。"
+  },
+  {
+    "lesson": "foundations.start.daily",
+    "title": "一次提交怎样留下来源与 daily？",
+    "object": "入纸盘、筛选栅与出纸盘依次对应来源准备、笔记整理与成功回执，分别观察三种处理产物。",
+    "kind": "sorter",
+    "steps": [
+      {
+        "label": "保存来源",
+        "detail": "AutoMemory 准备消息和日期，保存来源会话，再按 session 查找当天关联笔记。保存前清洗工具结果和 Base64 块，因此来源文件不能被称为所有输入的无损逐字归档。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/auto_memory.py"
+        ]
+      },
+      {
+        "label": "整理笔记",
+        "detail": "创建路径提供 daily_write，更新路径允许读写已有目标。提示词要求保留重要事实、数字与状态；程序仍会核对实际文件，成功响应也可能表示跳过而没有生成笔记。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/auto_memory.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/auto_memory.yaml"
+        ]
+      },
+      {
+        "label": "重放成功回执",
+        "detail": "session_id 关联来源会话，request_id 标识提交批次。相同 ID 和输入可重放已经持久化的成功回执，避免再跑记忆 Agent；相同 ID 配不同输入则会被拒绝。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/auto_memory.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/tests/unit/test_auto_memory_idempotency.py"
+        ]
+      }
+    ],
+    "boundary": "回放不等于任意故障下 exactly-once；回执前崩溃可能重跑，默认后续 auto_tag 步骤仍可执行。"
+  },
+  {
+    "lesson": "foundations.start.digest",
+    "title": "整理、整合与确认进度怎样配合？",
+    "object": "入纸盘、压印台与出纸盘分别对应提取、整合和确认进度，压印只比喻知识修订。",
+    "kind": "press",
+    "steps": [
+      {
+        "label": "提取知识单元",
+        "detail": "Extract 按日期窗口扫描 daily 变化，再分批交给模型。默认整轮最多五个单元；40000 的批次参数按文件字节估算，不是汉字数、token 数或整个请求的硬上限。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/dream/extract.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/config/default.yaml"
+        ]
+      },
+      {
+        "label": "整合既有知识",
+        "detail": "Integrate 检索已有 digest，调用文件工具新增、佐证、细化或纠正知识。personal、procedure、wiki 是内容组织分类，不是准确性等级；语义整合结果仍需质量验证。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/dream/integrate.py"
+        ]
+      },
+      {
+        "label": "确认处理版本",
+        "detail": "Finish 根据成功、失败和延后来源提交可确认水位，使用 Extract 观察到的文件版本。处理期间后来发生的新编辑不能被当成已经读过，以保留后续再次扫描的资格。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/dream/finish.py"
+        ]
+      }
+    ],
+    "boundary": "默认只扫描近期窗口；删除来源没有完整的事实级级联撤销保证，三个阶段也不构成全局事务。"
+  },
+  {
+    "lesson": "foundations.start.recall",
+    "title": "召回结果怎样回到当前任务？",
+    "object": "入纸盘、筛选栅与出纸盘分别对应候选召回、排序去重与交还任务，不把筛出结果当作正确事实。",
+    "kind": "sorter",
+    "steps": [
+      {
+        "label": "按配置找候选",
+        "detail": "Search 支持关键词和可选向量路径。当前默认 embedding_store 为空，主要使用 BM25；只有实际配置对应后端，才有条件观察两路都命中后的混合排序。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/index/search.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/config/default.yaml"
+        ]
+      },
+      {
+        "label": "排序与去重",
+        "detail": "两路都非空时按排名做 RRF，单路则保留原分数。同一 tool_context_id 可以记录已返回 chunk，默认 TTL 为二十四小时；再次返回少了，不必然说明原始文件丢失。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/index/search.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/index/_tool_context.py"
+        ]
+      },
+      {
+        "label": "交还任务使用",
+        "detail": "Search 返回片段、路径和元数据，宿主或 Agent 仍需读取并接入模型输入。标签索引降级时可以继续普通搜索并报告 applied=false，调用方要检查实际筛选状态。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/index/search.py"
+        ]
+      }
+    ],
+    "boundary": "分数不是正确率；工具上下文去重不是永久学习记录，标签筛选也不是授权边界。"
+  },
+  {
+    "lesson": "projects.reme.overview",
+    "title": "记忆运行时怎样连接两次任务？",
+    "object": "三个并排检验工位分别检查宿主时机、运行时执行与工具返回，每个托盘和量规只表示职责观察点。",
+    "kind": "bench",
+    "steps": [
+      {
+        "label": "宿主决定时机",
+        "detail": "宿主把带 session 的会话交给 Job，并在未来任务中主动查询。ReMe 不会仅因被安装就知道任务何时结束、何时需要旧信息；接入必须明确保存与读取的时机。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/application.py"
+        ]
+      },
+      {
+        "label": "装配与执行",
+        "detail": "Application 按配置实例化组件和 Job；BaseJob 每次执行创建步骤，并共享单次 RuntimeContext。文件存储与索引由长期组件管理，Step 实例字段不能作为跨请求持久记忆。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/application.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/components/job/base_job.py"
+        ]
+      },
+      {
+        "label": "工具返回材料",
+        "detail": "AgentScope wrapper 把 Job 包成 FunctionTool，程序执行后将 answer 交回工具结果。进程内工具桥接与 HTTP、MCP 外部入口不同；最终回答仍需宿主消费返回材料。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/components/agent_wrapper/as_agent_wrapper.py"
+        ]
+      }
+    ],
+    "boundary": "图示表示职责衔接，未做真实模型端到端测试；默认 BM25 与可选向量需要分别看待。"
+  },
+  {
+    "lesson": "projects.reme.memory-model",
+    "title": "来源、知识与查找状态不是副本",
+    "object": "三座双层档案架分放来源页、daily 与 digest 知识卡、分块查找卡，展示不同职责而非同步副本。",
+    "kind": "cabinet",
+    "steps": [
+      {
+        "label": "来源与时间",
+        "detail": "来源消息按 session_id 关联日记，同一 session 可跨日对应不同笔记。日期有显式值、消息时间等推导规则，mtime 用于变化检测；它们都不能单独证明某事实当前有效。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/auto_memory.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/schema/application_config.py"
+        ]
+      },
+      {
+        "label": "笔记表达知识",
+        "detail": "daily 记录经历，digest 按个人相关、方法与知识组织整理结果。frontmatter 可保存额外字段和来源，但分类及语义合并来自提示词与流程，并非事实真实性的数据库约束。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/schema/file_front_matter.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/dream/integrate.yaml"
+        ]
+      },
+      {
+        "label": "分块支撑查找",
+        "detail": "FileNode 描述文件，FileChunk 保存路径、行范围和文本，并据此计算身份。默认 Markdown chunker 不把全部 frontmatter 投影为 metadata，因此有字段不等于能按它检索。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/schema/file_node.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/schema/file_chunk.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/components/file_chunker/markdown_file_chunker.py"
+        ]
+      }
+    ],
+    "boundary": "为便于三组展示，daily 与 digest 放在知识组；session、daily、digest、chunk 仍有不同身份和更新路径。"
+  },
+  {
+    "lesson": "projects.reme.write-path",
+    "title": "文件写好与成功回执是不同事件",
+    "object": "入纸盘、筛选栅与出纸盘依次比喻来源准备、笔记处理和提交回执，分开观察写入与重试边界。",
+    "kind": "sorter",
+    "steps": [
+      {
+        "label": "准备与保存来源",
+        "detail": "AutoMemory 校验 session、确定日期，按消息身份合并并保存来源。清洗会移除工具结果与 Base64 块；重试若生成新消息 ID，不能期待程序自动识别自然语言重复。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/auto_memory.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/tests/unit/test_auto_memory_session_messages.py"
+        ]
+      },
+      {
+        "label": "创建、更新或跳过",
+        "detail": "程序按当天 session 查找笔记，决定开放创建工具还是已有目标的读写工具。模型整理后仍核对实际文件；未生成笔记时可成功返回 path=None、modified=False，需要查看元数据。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/auto_memory.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/auto_memory.yaml"
+        ]
+      },
+      {
+        "label": "提交成功回执",
+        "detail": "可选 request_id 与输入指纹支持成功请求重放，避免再执行记忆 Agent。回执在进程内路径锁下写入并原子替换；若文件已改但回执尚未提交就退出，仍可能重跑。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/auto_memory.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/tests/unit/test_auto_memory_idempotency.py"
+        ]
+      }
+    ],
+    "boundary": "成功不保证新建笔记或索引已可见；回放不是整条 Job 的 exactly-once，auto_tag 仍可执行。"
+  },
+  {
+    "lesson": "projects.reme.storage-index",
+    "title": "修复索引前先确认损坏层",
+    "object": "三座双层档案架分别对照源文件、分块与图、搜索结构，表示不同损坏层需要不同修复动作。",
+    "kind": "cabinet",
+    "steps": [
+      {
+        "label": "监听文件变化",
+        "detail": "默认监听 daily 与 digest 的 Markdown，启动时扫描路径和 mtime 生成变化事件。正文是知识来源；不是 workspace 中任何文件都会自动进入这条索引更新链路。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/index/init_changes.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/config/default.yaml"
+        ]
+      },
+      {
+        "label": "发布节点与分块",
+        "detail": "UpdateIndexStep 读取和分块后，在维护 guard 内再次核对来源版本，再发布节点与 chunk。持续编辑可能令有界重试仍失败；正文落盘与派生状态发布不是一笔跨层事务。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/index/update_changes.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/components/file_store/local_file_store.py"
+        ]
+      },
+      {
+        "label": "按层重建",
+        "detail": "LocalFileStore 加载时可修复图与 chunk 不一致；reindex 从已 ingest 的分块或节点重建指定搜索结构，不重扫正文。若 chunk 已过时，重建 BM25 仍可能使用旧内容。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/components/file_store/local_file_store.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/index/reindex.py"
+        ]
+      }
+    ],
+    "boundary": "原文、分块、索引需分别验收；可重建不代表所有后端都已进行破坏性恢复实验。"
+  },
+  {
+    "lesson": "projects.reme.retrieval-context",
+    "title": "召回、去重与供给要分别看",
+    "object": "入纸盘、筛选栅与出纸盘分别对应候选、过滤去重与供给片段，不把排名当作真假判断。",
+    "kind": "sorter",
+    "steps": [
+      {
+        "label": "召回候选",
+        "detail": "显式 query 与过滤条件进入关键词和可选向量搜索。默认没有有效向量后端；两路都命中才做 RRF，单路保留原分数，不能把不同配置下的阈值视为同一尺度。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/index/search.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/config/default.yaml"
+        ]
+      },
+      {
+        "label": "过滤与去重",
+        "detail": "Search 处理阈值、tool_context 已返回片段及数量限制。all_returned 与 no_results 有不同语义；标签索引失效可降级普通搜索，需读取 tag_filter.applied 等实际状态。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/index/search.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/index/_tool_context.py"
+        ]
+      },
+      {
+        "label": "供给来源片段",
+        "detail": "返回包含路径、行范围与片段，wrapper 可把 answer 交给 Agent。宿主还需核对哪些材料进入后续模型请求，再判断回答是否使用最新信息；搜索命中只是其中一步。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/index/search.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/components/agent_wrapper/as_agent_wrapper.py"
+        ]
+      }
+    ],
+    "boundary": "RRF、BM25 与向量不是统一置信度；tool_context 不是已读学习记录，标签也不是鉴权。"
+  },
+  {
+    "lesson": "projects.reme.updates-forgetting",
+    "title": "更正知识与删除来源怎样分开？",
+    "object": "入纸盘、压印台与出纸盘分别映射来源变化、知识修订与处理水位，区分语义更新和重试资格。",
+    "kind": "press",
+    "steps": [
+      {
+        "label": "识别来源变化",
+        "detail": "Dream Extract 扫描日期窗口内 daily 的变化，用观察到的版本组织知识单元。默认近期窗口之外的旧文件更正，不保证在下一次定时整理中立即被发现和处理。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/dream/extract.py"
+        ]
+      },
+      {
+        "label": "修订既有知识",
+        "detail": "整合 Agent 检索后，按 CREATE、CORROBORATE、REFINE 或 CORRECT 编辑 Markdown 并关联来源。这包含语义判断；文件修订不能自动约束每个读取者识别旧结论已失效。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/dream/integrate.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/dream/integrate.yaml"
+        ]
+      },
+      {
+        "label": "确认处理水位",
+        "detail": "Finish 只推进已处理且不受失败或延后影响的来源版本。同一来源参与成功和失败单元时仍应保留重试资格；这管理处理进度，不是多个 digest 文件的原子提交。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/dream/finish.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/tests/unit/test_auto_dream.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/file_io/delete.py"
+        ]
+      }
+    ],
+    "boundary": "DeleteStep 删除文件并报告存活引用，但不全面撤销其他笔记的派生事实；索引删除仍走监听链。"
+  },
+  {
+    "lesson": "projects.reme.runtime-consistency",
+    "title": "请求状态与后台状态能保存多久？",
+    "object": "三座双层档案架分别对照单次请求、应用共享与后台进度，展示状态生命周期和恢复责任。",
+    "kind": "cabinet",
+    "steps": [
+      {
+        "label": "单次执行状态",
+        "detail": "BaseJob 每次新建 Step，并让顺序步骤共享 RuntimeContext。异常会产生失败 Response，却不会自动回滚已完成步骤；Step 实例字段与请求中间结果不能承担持久化职责。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/components/job/base_job.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/components/runtime_context.py"
+        ]
+      },
+      {
+        "label": "应用共享状态",
+        "detail": "Application 按依赖拓扑启动组件，再启动各类 Job，关闭时逆序回收资源。共享组件、锁及计数有应用级生命周期；启动完成也不表示历史文件已全部完成首次索引。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/application.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/config/default.yaml"
+        ]
+      },
+      {
+        "label": "后台维护进度",
+        "detail": "后台 supervisor 对异常退避重启，Cron 按配置时区计算触发。监听使文件变化逐步进入索引；协程重启不是持久队列保证，cron 配置也不能证明停机错过的触发必然补跑。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/components/job/background_job.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/components/job/cron_job.py"
+        ]
+      }
+    ],
+    "boundary": "文件落盘、事件消费与查询可见是不同事件；锁、重试和恢复不构成全系统跨层事务。"
+  },
+  {
+    "lesson": "projects.reme.integration-isolation",
+    "title": "协议、工具范围与身份各管什么？",
+    "object": "三个并排检验工位分别检查协议入口、工具暴露与文件身份边界，托盘和量规不表示真实部署。",
+    "kind": "bench",
+    "steps": [
+      {
+        "label": "接入协议",
+        "detail": "Application.run_job 是进程内调用，HTTP 注册网络端点，MCP 以工具协议暴露 Job。它们可以到达相同业务能力，但工具名称或端口相同，不代表协议和错误契约相同。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/application.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/components/service/http_service.py"
+        ]
+      },
+      {
+        "label": "工具暴露契约",
+        "detail": "BaseService 按 enabled、enable_serve 与白名单过滤 Job。MCP 默认返回 answer，仅特定选项才把业务失败转为 ToolError；协议成功返回后，宿主仍可能需要判断业务状态。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/components/service/base_service.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/components/service/mcp_tools.py"
+        ]
+      },
+      {
+        "label": "文件与身份边界",
+        "detail": "路径解析拒绝 workspace 逃逸，并可检查允许范围；这回答目标文件范围。当前 HTTP 入口的通配 CORS 不提供身份鉴权，共享服务仍需明确用户身份与 workspace 分配。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/file_io/_path.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/components/service/http_service.py"
+        ]
+      }
+    ],
+    "boundary": "未验证真实宿主接入；默认 loopback、文件约束和服务白名单均不能替代完整多租户授权。"
+  },
+  {
+    "lesson": "projects.reme.evaluation-observability",
+    "title": "健康、命中与回答正确怎样区分？",
+    "object": "三个并排检验工位分别核对运行状态、中间证据和评测条件，展示不同成功口径而非实测仪表。",
+    "kind": "bench",
+    "steps": [
+      {
+        "label": "检查运行状态",
+        "detail": "HealthCheck 汇总部分组件启动和健康字段，Status 估计对象大小及进程 RSS。这些数据能排查运行问题，却未验证事实正确；对象估计也不等于组件独占的物理内存。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/common/health_check.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/common/status.py"
+        ]
+      },
+      {
+        "label": "保留中间证据",
+        "detail": "计数器与日志帮助排查调用及阶段失败，但不是持久审计账本或自动完整追踪。研究应额外保留来源、daily、digest、搜索结果和实际模型输入，才能定位错误所在阶段。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/utils/counter.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/utils/logger_utils.py"
+        ]
+      },
+      {
+        "label": "核对评测条件",
+        "detail": "LongMemEval runner 组织独立 workspace、时序导入、Dream、查询与 judge。解释分数须记录模型、数据、参数及是否复用 workspace；配置五百题不代表本研究已运行五百题。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/benchmark/longmemeval/run.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/benchmark/longmemeval/config.yaml"
+        ]
+      }
+    ],
+    "boundary": "本页只做源码核验，未执行完整 benchmark；运行成功、内容正确、命中和回答正确不能互相替代。"
+  },
+  {
+    "lesson": "projects.reme.cost-adoption",
+    "title": "为什么不能只算最后一次回答？",
+    "object": "三个并排检验工位分别核对采集整理、索引使用与 usage 口径，托盘内卡片不是实测账单。",
+    "kind": "bench",
+    "steps": [
+      {
+        "label": "采集与整理",
+        "detail": "采集可产生 Agent 多轮调用，Dream 又有提取、整合与失败重试。默认扫描两天、全轮五单元，四万批次参数按文件字节估算；它们控制工作量，不是 token 或账单硬上限。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/config/default.yaml",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/dream/extract.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/dream/integrate.py"
+        ]
+      },
+      {
+        "label": "索引与持续使用",
+        "detail": "默认 BM25 没有必经向量化；配置可选 embedding 后才有相应调用和存储。查询材料仍会占模型输入，扫描、重建与备份也消耗资源，因此不能只比较最终回答长度。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/config/default.yaml",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/components/agent_wrapper/as_agent_wrapper.py"
+        ]
+      },
+      {
+        "label": "按 usage 核算",
+        "detail": "TokenUsage 仅统一报告输入、输出及两者之和，不统一供应商账单细项。wrapper 缺 usage 时报告不可用而非零消耗，流式路径也不累计同样计数，需保留原始请求记录。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/schema/token_usage.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/components/agent_wrapper/as_agent_wrapper.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/tests/unit/test_token_usage.py"
+        ]
+      }
+    ],
+    "boundary": "没有实测金额、节省比例或收益排名；采用前应按相同任务和预算验证质量、变更处理与总成本。"
+  }
+]

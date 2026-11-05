@@ -7,6 +7,7 @@ import { Marked } from 'marked';
 import sanitizeHtml from 'sanitize-html';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { buildFigures } from './build-figures.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 async function filesAt(dir) {
@@ -36,6 +37,7 @@ export function parsePinnedSourceHref(href, projects) {
     repository = `https://github.com/${parts[0]}/${parts[1]}`;
     commit = parts[2]; sourcePath = parts.slice(3);
   } else return null;
+  if (url.protocol !== 'https:' || url.username || url.password) return { error: `源码链接必须使用无凭据的 HTTPS ${href}` };
   const entry = Object.entries(projects).find(([, source]) => source.repository?.toLowerCase() === repository.toLowerCase());
   if (!entry) return { error: `正文源码仓库未登记基线 ${repository}` };
   const [projectId, source] = entry;
@@ -184,6 +186,10 @@ export async function buildCourse({ strict = true } = {}) {
     l.search = `${l.title} ${l.summary} ${l.content}`.replace(/[#*`>\[\]]/g, '').toLocaleLowerCase();
     delete l.content;
   }
+  await buildFigures(lessons, async (href, lesson) => {
+    if (!parsePinnedSourceHref(href, revision.projects)) errors.push(`${lesson.id}: 图解证据必须为固定源码链接 ${href}`);
+    else await validateBodySource(href, lesson);
+  });
   if (strict && errors.length) throw new Error(`内容检查失败：\n${errors.join('\n')}`);
   const groups = (catalog.groups || []).map(g => ({ ...g, lessons: g.lessons.filter(id => ids.has(id)) }));
   const output = path.join(root, 'web/generated/course.json');

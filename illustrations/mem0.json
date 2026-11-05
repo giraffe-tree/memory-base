@@ -1,0 +1,496 @@
+[
+  {
+    "lesson": "foundations.start.mem0",
+    "title": "保存为记录，取回后仍需宿主使用",
+    "object": "入纸盘表示提交的消息，筛选栅表示事实抽取，出纸盘表示可供宿主选用的结果；实际供给仍需宿主完成。",
+    "kind": "sorter",
+    "steps": [
+      {
+        "label": "提交消息与作用域",
+        "detail": "宿主主动调用 add，提供 user、agent 或 run 标识。默认推断分支读取同作用域近期消息和相关旧记忆作为背景；SDK 初始化本身不会自动采集所有聊天。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py"
+        ]
+      },
+      {
+        "label": "抽取新增事实",
+        "detail": "当前 ADD-only 路径提取事实，生成 UUID，将正文 payload 与 embedding 保存到向量库。SQLite 另存历史与最近十条消息，不是完整来源会话档案。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/storage.py"
+        ]
+      },
+      {
+        "label": "找回再供给模型",
+        "detail": "search 在 filters 内接收身份标识，语义候选结合关键词和实体信号排序。返回结果后，宿主还需选择文本并组织实际模型输入；命中不能独自证明使用正确。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/utils/scoring.py"
+        ]
+      }
+    ],
+    "boundary": "图解针对固定版本 Python OSS；MemoryClient 是托管 HTTP 客户端，不能把两者的内部保证混用。"
+  },
+  {
+    "lesson": "projects.mem0.overview",
+    "title": "同名 add，工作究竟在哪里发生？",
+    "object": "三个并排检验工位依次对应进程内编排、托管请求边界与宿主供给；托盘和量规用于分项核对，不表示三者串行依赖。",
+    "kind": "bench",
+    "steps": [
+      {
+        "label": "进程内 Memory",
+        "detail": "Python OSS Memory 在调用应用中装配 LLM、embedder、vector store 与 SQLite；AsyncMemory 提供 await 接口。使用远程 provider 时，进程内编排仍会发出外部请求。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/configs/base.py"
+        ]
+      },
+      {
+        "label": "HTTP 托管客户端",
+        "detail": "MemoryClient 通过 HTTP 调用托管端点，add 与 search 使用 V3 路由。仓库可核验参数和响应转交，无法由客户端推出托管后端与 OSS 使用相同内部实现。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/client/main.py"
+        ]
+      },
+      {
+        "label": "宿主组织使用",
+        "detail": "应用选择何时提交消息、使用哪个 scope、何时搜索以及如何把记忆放入回答上下文。默认 add 只新增自动抽取的事实，显式 update 和 delete 则仍然存在。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/configs/prompts.py"
+        ]
+      }
+    ],
+    "boundary": "当前图解不覆盖所有语言 SDK；没有运行真实模型或托管账户实验。"
+  },
+  {
+    "lesson": "projects.mem0.memory-model",
+    "title": "主记录、历史和近期消息各存什么？",
+    "object": "三座并排双层档案架分别表示主记录、变更历史与近期上下文；层板只是承载结构，不表示实际表数或消息数量。",
+    "kind": "cabinet",
+    "steps": [
+      {
+        "label": "正文在主记录",
+        "detail": "一条记忆用 UUID 标识，向量记录 payload 保存 data、hash、时间与身份 scope。返回接口把正文映射成 memory；主向量库因此同时承载知识内容，不能随意清空。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/configs/base.py"
+        ]
+      },
+      {
+        "label": "历史记录显式变更",
+        "detail": "SQLite history 按记忆 ID 保存 ADD、UPDATE、DELETE 以及旧新正文。它能回看显式变化，却不会自动形成完整事实谱系，也不能代替主库中的当前记录。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/storage.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py"
+        ]
+      },
+      {
+        "label": "近期消息只留十条",
+        "detail": "SQLite messages 按组合 scope 保存最近十条，供下一次提取消歧；旧行会被裁剪。辅助实体 collection 的 linked_memory_ids 另用于关联检索，不是原始消息账本。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/storage.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py"
+        ]
+      }
+    ],
+    "boundary": "scope 是调用者提供的筛选边界，不是身份认证；消息时间、记录创建时间和事实生效时间不能互相替代。"
+  },
+  {
+    "lesson": "projects.mem0.write-path",
+    "title": "ADD-only 怎样落盘，失败后留下什么？",
+    "object": "入纸盘表示抽取背景，筛选栅表示局部去重与插入检查，出纸盘表示待核对的辅助状态；出纸不代表跨库原子提交。",
+    "kind": "sorter",
+    "steps": [
+      {
+        "label": "准备抽取背景",
+        "detail": "默认 infer=True 先读取本 scope 最近十条消息，向量召回十条相关旧记忆，再发起一次 ADD-only LLM 提取。旧记录作为消歧背景，并非供模型任意 UPDATE 的句柄。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/configs/prompts.py"
+        ]
+      },
+      {
+        "label": "局部去重与插入",
+        "detail": "接受的事实先 embedding，比较召回旧记录 hash 和本批 seen_hashes，再生成新 UUID 插入。批量 embedding 或 insert 失败可逐条回退，返回代码确认写入的子集。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py"
+        ]
+      },
+      {
+        "label": "维护辅助状态",
+        "detail": "正文写入后再写 SQLite history、维护实体关联并保存近期消息。辅助状态可单独失败；解析失败还可能返回空结果，所以调用成功、内容完整与各层一致应分别观察。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/storage.py"
+        ]
+      }
+    ],
+    "boundary": "哈希检查没有覆盖整个 scope；infer=False 不走同一抽取去重流程，跨库也没有统一回滚。"
+  },
+  {
+    "lesson": "projects.mem0.storage-index",
+    "title": "向量库是正文载体，索引信号另有条件",
+    "object": "三座并排双层档案架分别表示主库与历史、关键词索引条件、实体关联；并列摆放用于区分恢复责任，不代表相互复制。",
+    "kind": "cabinet",
+    "steps": [
+      {
+        "label": "主库和 SQLite 分离",
+        "detail": "默认 Qdrant local path 为 /tmp/qdrant，SQLite history 默认在 MEM0_DIR 或 ~/.mem0 下。主 payload 包含正文；备份 history.db 不能保证覆盖主记忆。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/configs/vector_stores/qdrant.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/configs/base.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py"
+        ]
+      },
+      {
+        "label": "关键词槽需核验",
+        "detail": "Qdrant 新 collection 可配置 bm25 sparse slot，关键词查询还依赖编码器。旧 collection 缺槽或依赖加载失败时会降级；升级 SDK 本身不保证已有库完成迁移。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/vector_stores/qdrant.py"
+        ]
+      },
+      {
+        "label": "实体为辅助关联",
+        "detail": "独立 entities collection 复用向量 provider，保存实体与 linked_memory_ids。spaCy 英文模型缺失时可能尝试下载，失败可降级为空；本地向量库不等于首次执行完全离线。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/utils/spacy_models.py"
+        ]
+      }
+    ],
+    "boundary": "主库、SQLite 与实体 collection 无统一事务；图中格子表示状态职责，不代表已经有全量自动重建协议。"
+  },
+  {
+    "lesson": "projects.mem0.retrieval-context",
+    "title": "先过语义门槛，再让其他信号加分",
+    "object": "入纸盘表示语义候选，筛选栅表示先过语义阈值再组合信号，出纸盘表示交给宿主的结果；栅格数量不代表候选数。",
+    "kind": "sorter",
+    "steps": [
+      {
+        "label": "语义决定候选",
+        "detail": "查询先做词形处理、实体提取与 embedding，再进行语义召回。主候选只来自 semantic_results；关键词单独命中的记录不会仅凭 BM25 分高就被补入结果。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/utils/scoring.py"
+        ]
+      },
+      {
+        "label": "门控后组合分数",
+        "detail": "threshold 先过滤原始语义分数，合格候选再结合 BM25 和 entity 加分并归一化。除数依本轮非空信号表变化，因此 final 可以低于 threshold，也不是事实准确率。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/utils/scoring.py"
+        ]
+      },
+      {
+        "label": "返回后仍需供给",
+        "detail": "top-k 之后仅在请求 rerank 且配置 reranker 时重排，失败保留原结果。宿主仍需处理冲突、预算与实际模型输入；重排不能挽回未进入候选池的记忆。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py"
+        ]
+      }
+    ],
+    "boundary": "图解表达代码顺序与集合边界，不表示三路完全并行，也不提供真实检索质量或中文效果结论。"
+  },
+  {
+    "lesson": "projects.mem0.updates-forgetting",
+    "title": "新增、更正、删除和过期是四种语义",
+    "object": "入纸盘、压印台与出纸盘分别提示自动新增、指定记录更正、删除与可见性检查；三项语义独立，不表示必须依次调用。",
+    "kind": "press",
+    "steps": [
+      {
+        "label": "自动新增不覆盖",
+        "detail": "后来提交“项目改用 Rust”，默认 add 仍为提取结果创建新 UUID，不会仅因新事实到来就删除旧 Python 记录。明确覆盖当前状态需要宿主定位旧 ID 并选择 update。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py"
+        ]
+      },
+      {
+        "label": "更正逐层传播",
+        "detail": "显式 update 先修改主记录的文本、向量、hash 和时间，再保存 SQLite UPDATE 历史，文本变化后尝试重建实体链接。身份字段不能靠普通 metadata 偷换。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/storage.py"
+        ]
+      },
+      {
+        "label": "删除仍有留痕",
+        "detail": "delete 先删主记录，随后保存含旧正文的 DELETE history 并尝试实体清理。expiration_date 则默认影响 search/get_all 可见性，get(id) 没有同样过滤。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/storage.py"
+        ]
+      }
+    ],
+    "boundary": "删除成功不等于所有副本擦除；单条 delete 不会按事实清理近期消息，辅助清理也不与主库原子提交。"
+  },
+  {
+    "lesson": "projects.mem0.runtime-consistency",
+    "title": "await 改变等待方式，不提供跨库提交",
+    "object": "三个并排检验工位分别核对请求内工作、异步副作用与锁的范围；各自托盘与量规不构成覆盖全部存储的总事务。",
+    "kind": "bench",
+    "steps": [
+      {
+        "label": "请求内组织工作",
+        "detail": "add 在调用内完成召回、提取、embedding 和写入；局部变量记录当前批次与已落库项。该入口没有把工作先保存为持久化队列，再交 worker 保证执行。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py"
+        ]
+      },
+      {
+        "label": "异步仍有副作用",
+        "detail": "AsyncMemory 通过线程适配调用同步 provider，取消 await 不必然终止已在线程或远端进行的写入。批量失败可逐条降级，只有确认成功的主记录进入返回结果。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py"
+        ]
+      },
+      {
+        "label": "锁和事务范围有限",
+        "detail": "SQLite 连接级锁与事务只覆盖本地操作；实体与主库没有共同提交。REST 状态锁保护实例引用，取到引用后的业务在锁外执行，配置切换不会暂停全部旧请求。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/storage.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/server/server_state.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py"
+        ]
+      }
+    ],
+    "boundary": "图解不是宕机恢复实测；当前链路没有统一业务操作 ID，重试幂等需要宿主与选定后端另行验收。"
+  },
+  {
+    "lesson": "projects.mem0.integration-isolation",
+    "title": "先选入口，再绑定认证身份与数据归属",
+    "object": "三个并排检验工位分别核对实现入口、作用域参数和归属授权；各自托盘与量规表示独立检查，不表示三种入口互通或串行依赖。",
+    "kind": "bench",
+    "steps": [
+      {
+        "label": "区分三种入口",
+        "detail": "Memory 是进程内 Python API，MemoryClient 访问托管平台；自托管 FastAPI 包装 OSS 并使用自己的路由和 header。仅替换客户端 host 不保证路由或响应兼容。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/client/main.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/server/main.py"
+        ]
+      },
+      {
+        "label": "按方法传作用域",
+        "detail": "当前 OSS add 在顶层接收 user/agent/run；search 和 get_all 则要求 filters，拒绝同名顶层参数。REST 的兼容包装又有差异，适配器应按具体入口逐方法核对。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/server/main.py"
+        ]
+      },
+      {
+        "label": "认证不等于归属授权",
+        "detail": "自托管支持 JWT 和 API key，但所读按 ID 路由仍直接调用共享 Memory，作用域查询也使用提交的身份。应用需把认证 User 与允许 scope、memory ID 归属绑定。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/server/main.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/server/auth.py"
+        ]
+      }
+    ],
+    "boundary": "最后一格是路由静态分析，没有执行跨用户访问；不能把已有认证扩写成完整的行级租户隔离。"
+  },
+  {
+    "lesson": "projects.mem0.evaluation-observability",
+    "title": "局部日志与分数，怎样连到任务验收？",
+    "object": "三个并排检验工位分别核对内容与评分、请求日志、官方成绩范围；托盘与量规是证据分类示意，不表示质量已通过验收。",
+    "kind": "bench",
+    "steps": [
+      {
+        "label": "先定位内容与排序",
+        "detail": "通过 get 与 history 检查正文是否正确，再用 search(explain=True) 看 semantic、BM25、entity 与归一分数。explain 解释算分，不证明事实可靠或适用于当前任务。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py"
+        ]
+      },
+      {
+        "label": "请求日志只看一层",
+        "detail": "REST 请求中间件记录路径、状态、耗时和认证类型；request ID 辅助追踪。日志不包含每次提取事实与完整模型账单，也不是主记忆提交的一部分。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/server/main.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/server/errors.py"
+        ]
+      },
+      {
+        "label": "把官方成绩单独列出",
+        "detail": "README 成绩属于托管平台，不能算作本地 OSS 复现。源码的遥测有采样，evaluation 另为未初始化子模块；需另固定环境、数据和实际供给内容再评价最终回答。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/README.md",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/.gitmodules",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/telemetry.py"
+        ]
+      }
+    ],
+    "boundary": "没有运行端到端质量或延迟评测；成功响应、ADD 历史、高分和采样事件都不等于完整任务成功。"
+  },
+  {
+    "lesson": "projects.mem0.cost-adoption",
+    "title": "一次 LLM 抽取之外，还有哪些工作？",
+    "object": "三个并排检验工位分别核对抽取准备、新增维护与再次使用的工作；托盘与量规提示分别计量，不显示实际费用或耗时。",
+    "kind": "bench",
+    "steps": [
+      {
+        "label": "抽取前也有开销",
+        "detail": "当前对话要先 embedding，再检索相关旧记录并读取近期消息。一次提取调用的输入还包含旧候选和新消息，因此“一次 LLM”不等于单次网络请求或短提示词。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py"
+        ]
+      },
+      {
+        "label": "新增后还有多层维护",
+        "detail": "事实需 batch embedding、hash 检查与主库写入，实体维护还有 NLP、embedding 和关联查询。embedding adapter 会分批，记录条数不能直接当作远端请求次数。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/embeddings/openai.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/utils/spacy_models.py"
+        ]
+      },
+      {
+        "label": "复用时继续计量",
+        "detail": "检索涉及 query embedding、候选搜索、可选重排及宿主回答模型。采用前应记录维护成本、实际供给 token 与任务质量；只比较最后一轮回答 token 会遗漏前期投入。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/llms/openai.py"
+        ]
+      }
+    ],
+    "boundary": "图中读数器不代表实测数值；infer=False 仍需 embedding，缺少统一 usage 台账不等于成本为零。"
+  },
+  {
+    "lesson": "comparisons.architecture-map",
+    "title": "先找到正文，再比较辅助状态",
+    "object": "三座并排双层档案架分别表示 ReMe 文件主线、Mem0 记录主线与辅助状态核对；架位不是名次，层板不是实际组件数量。",
+    "kind": "cabinet",
+    "steps": [
+      {
+        "label": "ReMe 文件主线",
+        "detail": "ReMe Application 装配组件与 Jobs，工作区文件保存来源、daily 和 digest；文件节点、分块与索引承担查找职责。正文可直接检查，但维护与恢复仍有各自时点。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/application.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/components/file_store/local_file_store.py"
+        ]
+      },
+      {
+        "label": "Mem0 记录主线",
+        "detail": "Mem0 Python OSS 以向量记录 payload 保存事实正文，SQLite 保存历史和近期消息，实体 collection 辅助检索。不能把主向量库当作可随意清空的搜索缓存。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/storage.py"
+        ]
+      },
+      {
+        "label": "分别核对辅助状态",
+        "detail": "ReMe 配置中的文件与检索组件、Mem0 的 provider 与 SQLite 承担不同责任；两边都要由宿主接入实际任务。工作区或 scope 的范围约束本身不证明调用者有权访问。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/file_io/_path.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/configs/base.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/server/main.py"
+        ]
+      }
+    ],
+    "boundary": "只比较固定实现的状态骨架；没有同环境性能测量，不能从载体形态推出质量胜负或完整恢复保证。"
+  },
+  {
+    "lesson": "comparisons.write-path",
+    "title": "请求回执与文本 hash 识别的是不同对象",
+    "object": "三个并排检验工位分别核对 ReMe 请求回执、Mem0 内容指纹与故障后落点；托盘与量规表示独立证据，不是统一重试流水线。",
+    "kind": "bench",
+    "steps": [
+      {
+        "label": "ReMe 识别成功批次",
+        "detail": "request_id 与输入指纹匹配成功回执时可回放，跳过 AutoMemory Agent；同 ID 换负载会被拒绝。默认 Job 后续 auto_tag 仍可执行，回执不覆盖所有后续动作。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/auto_memory.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/config/default.yaml"
+        ]
+      },
+      {
+        "label": "Mem0 检查局部内容",
+        "detail": "Mem0 默认提取后比较本批文本和已召回旧记录 hash。旧 hash 仅来自相关候选，未覆盖全 scope；这与 ReMe 请求批次回执不是同一个幂等协议。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/auto_memory.py"
+        ]
+      },
+      {
+        "label": "故障后观察真实落点",
+        "detail": "ReMe 的文件副作用与回执保存，Mem0 的主库、history 和实体维护都有独立时点。中途失败后应读取实际内容和辅助状态，不能把异常直接解释为没有保存。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/auto_memory.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/storage.py"
+        ]
+      }
+    ],
+    "boundary": "本图没有运行两套完整重试链路；两边的局部保护都不应概括成跨进程 exactly-once。"
+  },
+  {
+    "lesson": "comparisons.fact-updates",
+    "title": "当前状态变化，不等于旧痕迹被清除",
+    "object": "入纸盘、压印台与出纸盘分别提示 ReMe 整合、Mem0 显式更新与删除留痕核对；这是三项对照，不是两套系统共享的串行流程。",
+    "kind": "press",
+    "steps": [
+      {
+        "label": "ReMe 整合长期知识",
+        "detail": "Dream 从来源提取单元，再按 CREATE、CORROBORATE、REFINE、CORRECT 等动作整合 digest；Finish 按处理结果推进水位。选择更正动作仍需核对实际文本和扫描范围。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/dream/integrate.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/schema/dream.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/dream/finish.py"
+        ]
+      },
+      {
+        "label": "Mem0 明确新增或覆盖",
+        "detail": "自动 ADD-only 可为新决定创建新 UUID；要覆盖指定状态则显式 update 旧 ID，再依次维护历史和实体。它与 ReMe Dream 的来源到长期知识整合不是相同调用契约。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/evolve/dream/integrate.py"
+        ]
+      },
+      {
+        "label": "两边都需检查遗留",
+        "detail": "ReMe 删除来源不保证 digest 中派生事实已级联撤销；Mem0 删除主记录后仍保存旧正文 history，过期又只是可见性策略。应分别检查正文、来源、缓存与历史。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/file_io/delete.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/storage.py"
+        ]
+      }
+    ],
+    "boundary": "比较是源码核验；没有实际运行事实冲突与删除传播实验，删除成功不代表所有副本彻底抹除。"
+  },
+  {
+    "lesson": "comparisons.retrieval-context",
+    "title": "同有关键词，候选与阈值仍然不同",
+    "object": "入纸盘、筛选栅与出纸盘分别对应 ReMe 机制、Mem0 机制与返回使用的对照；位置只用于逐项阅读，不表示共用同一候选流水线。",
+    "kind": "sorter",
+    "steps": [
+      {
+        "label": "ReMe 可做两路合并",
+        "detail": "ReMe 默认 BM25，配置向量后两路都有结果时按 chunk ID 合并并用 RRF 融合排名；单路保留原分。图中分叉是配置后的机制，不表示默认向量已经启用。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/index/search.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/config/default.yaml"
+        ]
+      },
+      {
+        "label": "Mem0 先限语义池",
+        "detail": "Mem0 候选只来自语义结果，BM25 与 entity 为这些候选加分，先按语义 threshold 门控再归一。它与 ReMe 的两路并集和融合后阈值不是同一算分协议。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/utils/scoring.py",
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/index/search.py"
+        ]
+      },
+      {
+        "label": "返回与使用分开验收",
+        "detail": "ReMe 可用 tool_context_id 抑制已返回 chunk；Mem0 所读 search 主线没有同等跨调用机制。两边都还需宿主把选中内容放进模型输入，重复查询的结果数不能直接排名。",
+        "evidence": [
+          "https://github.com/agentscope-ai/ReMe/blob/d323356e6f11c0faf4bf30fae7a2edc30e18fbb9/reme/steps/index/_tool_context.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py"
+        ]
+      }
+    ],
+    "boundary": "RRF 与归一组合分都不是事实准确率；本图不是检索质量评测，需另对齐语料、模型与返回预算。"
+  }
+]

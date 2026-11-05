@@ -12,10 +12,10 @@ export default defineConfig(async ({ command }) => {
     plugins: [{
       name: 'memory-content',
       configureServer(server: ViteDevServer) {
-        server.watcher.add(['docs', 'experiments', 'curriculum', 'sources'].map(p => path.resolve(p)));
+        server.watcher.add(['docs', 'experiments', 'curriculum', 'sources', 'illustrations'].map(p => path.resolve(p)));
         let timer: ReturnType<typeof setTimeout>;
         server.watcher.on('all', (_event: string, file: string) => {
-          if (!/[/\\](docs|experiments|curriculum|sources)[/\\]/.test(file)) return;
+          if (!/[/\\](docs|experiments|curriculum|sources|illustrations)[/\\]/.test(file)) return;
           clearTimeout(timer);
           timer = setTimeout(async () => {
             try {

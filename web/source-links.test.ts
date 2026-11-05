@@ -21,3 +21,8 @@ test('official repository homepages and internal learning links remain ordinary 
   assert.equal(parsePinnedSourceHref('https://github.com/letta-ai/letta', projects), null);
   assert.equal(parsePinnedSourceHref('#/lesson/projects.letta.overview', projects), null);
 });
+test('evidence links reject executable protocols and embedded credentials', () => {
+  for (const base of ['javascript://github.com','http://github.com','https://name:secret@github.com']) {
+    assert.match(parsePinnedSourceHref(`${base}/letta-ai/letta-code/blob/${sha}/README.md`, projects).error, /HTTPS/);
+  }
+});
