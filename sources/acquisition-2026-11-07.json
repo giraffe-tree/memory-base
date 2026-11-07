@@ -1,0 +1,122 @@
+{
+  "acquired_on": "2026-11-07",
+  "selection": "上一轮工程选型的十个框架；不是性能排名或AML赛事前十。已有Mem0/Letta保留研究基线并核对最新差异，其余固定到本次拉取HEAD。",
+  "execution": "仅Git获取与静态源码/测试阅读；未安装或执行上游依赖、未调用模型或托管API。",
+  "frameworks": [
+    {
+      "id": "hindsight",
+      "repository": "https://github.com/vectorize-io/hindsight",
+      "research_commit": "0bd55015393d224deec1073d63b24bcc0faad164",
+      "research_path": "refernece/hindsight",
+      "fetched_commit": "0bd55015393d224deec1073d63b24bcc0faad164",
+      "fetched_path": "refernece/hindsight",
+      "fetched_revision_time": "2026-11-07T12:27:45+01:00",
+      "origin": "https://github.com/vectorize-io/hindsight.git",
+      "clean": true
+    },
+    {
+      "id": "mem0",
+      "repository": "https://github.com/mem0ai/mem0",
+      "research_commit": "ed1f10fc87080f0b67f99be370817504888462ab",
+      "research_path": "refernece/mem0",
+      "fetched_commit": "f1791daa86d469249c9b002f62644d58a1eb96a0",
+      "fetched_path": "refernece/latest/mem0",
+      "fetched_revision_time": "2026-11-06T22:23:06+05:30",
+      "origin": "https://github.com/mem0ai/mem0.git",
+      "clean": true
+    },
+    {
+      "id": "graphiti",
+      "repository": "https://github.com/getzep/graphiti",
+      "research_commit": "747b480ec6b12ecb718f1e2bc588b20ee36ea9c2",
+      "research_path": "refernece/graphiti",
+      "fetched_commit": "747b480ec6b12ecb718f1e2bc588b20ee36ea9c2",
+      "fetched_path": "refernece/graphiti",
+      "fetched_revision_time": "2026-11-06T04:49:50+00:00",
+      "origin": "https://github.com/getzep/graphiti.git",
+      "clean": true
+    },
+    {
+      "id": "letta",
+      "repository": "https://github.com/letta-ai/letta-code",
+      "research_commit": "e6d6cc27ef1111da80e919dc1cef179613894b66",
+      "research_path": "refernece/letta-code",
+      "fetched_commit": "9176d8c0b16f408e9240422a98379a423e2176c3",
+      "fetched_path": "refernece/latest/letta-code",
+      "fetched_revision_time": "2026-11-06T23:03:51-08:00",
+      "origin": "https://github.com/letta-ai/letta-code.git",
+      "clean": true
+    },
+    {
+      "id": "openviking",
+      "repository": "https://github.com/volcengine/OpenViking",
+      "research_commit": "1bee73853e2400086632596198282f3c5d118312",
+      "research_path": "refernece/openviking",
+      "fetched_commit": "1bee73853e2400086632596198282f3c5d118312",
+      "fetched_path": "refernece/openviking",
+      "fetched_revision_time": "2026-11-07T19:27:32+08:00",
+      "origin": "https://github.com/volcengine/OpenViking.git",
+      "clean": true
+    },
+    {
+      "id": "cognee",
+      "repository": "https://github.com/topoteretes/cognee",
+      "research_commit": "8853378eae5366addb064e758e560a456146ae1a",
+      "research_path": "refernece/cognee",
+      "fetched_commit": "8853378eae5366addb064e758e560a456146ae1a",
+      "fetched_path": "refernece/cognee",
+      "fetched_revision_time": "2026-11-06T21:00:54+01:00",
+      "origin": "https://github.com/topoteretes/cognee.git",
+      "clean": true
+    },
+    {
+      "id": "memos",
+      "repository": "https://github.com/MemTensor/MemOS",
+      "research_commit": "d326a6419467c2205041b58533b0ebfdf4f38173",
+      "research_path": "refernece/memos",
+      "fetched_commit": "d326a6419467c2205041b58533b0ebfdf4f38173",
+      "fetched_path": "refernece/memos",
+      "fetched_revision_time": "2026-11-04T14:20:33+08:00",
+      "origin": "https://github.com/MemTensor/MemOS.git",
+      "clean": true
+    },
+    {
+      "id": "everos",
+      "repository": "https://github.com/EverMind-AI/EverOS",
+      "research_commit": "80ef766b690dd02eb6caa4e9f78bad4a9f0c1ee9",
+      "research_path": "refernece/everos",
+      "fetched_commit": "80ef766b690dd02eb6caa4e9f78bad4a9f0c1ee9",
+      "fetched_path": "refernece/everos",
+      "fetched_revision_time": "2026-11-06T16:46:26+08:00",
+      "origin": "https://github.com/EverMind-AI/EverOS.git",
+      "clean": true
+    },
+    {
+      "id": "langmem",
+      "repository": "https://github.com/langchain-ai/langmem",
+      "research_commit": "8620b986af5b0c7593e6b7fbece2998690d22d15",
+      "research_path": "refernece/langmem",
+      "fetched_commit": "8620b986af5b0c7593e6b7fbece2998690d22d15",
+      "fetched_path": "refernece/langmem",
+      "fetched_revision_time": "2026-11-03T07:25:33-08:00",
+      "origin": "https://github.com/langchain-ai/langmem.git",
+      "clean": true
+    },
+    {
+      "id": "memobase",
+      "repository": "https://github.com/memodb-io/memobase",
+      "research_commit": "358c16bbc6d687937d79bc2f984a11c3be8da901",
+      "research_path": "refernece/memobase",
+      "fetched_commit": "358c16bbc6d687937d79bc2f984a11c3be8da901",
+      "fetched_path": "refernece/memobase",
+      "fetched_revision_time": "2026-01-11T11:43:56+08:00",
+      "origin": "https://github.com/memodb-io/memobase.git",
+      "clean": true
+    }
+  ],
+  "anthropic_reference": {
+    "repository": "https://github.com/anthropics/anthropic-sdk-python",
+    "commit": "4c7b598466b88559583f98216139be8e9b34c1fc",
+    "local_path": "refernece/anthropic-sdk-python"
+  }
+}

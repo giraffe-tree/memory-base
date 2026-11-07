@@ -1,0 +1,68 @@
+[
+  {
+    "lesson": "comparisons.ten-framework-architecture",
+    "title": "先看状态，再比较记忆方案",
+    "object": "三座档案架分别表示持久状态、检索供给和采用条件；并排用于比较职责，不代表框架之间存在调用或统一部署关系。",
+    "kind": "cabinet",
+    "steps": [
+      {
+        "label": "持久状态",
+        "detail": "事实、来源、文件与会话有不同持有者。Mem0保存记录，Letta从已提交文件投影；数据载体不能由产品名称推断。",
+        "evidence": [
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py",
+          "https://github.com/letta-ai/letta-code/blob/e6d6cc27ef1111da80e919dc1cef179613894b66/src/backend/local/system-prompt-compilation.ts"
+        ]
+      },
+      {
+        "label": "检索供给",
+        "detail": "Hindsight recall返回证据，reflect另外回答；OpenViking先召回候选，再按上下文预算读取和组织。",
+        "evidence": [
+          "https://github.com/vectorize-io/hindsight/blob/0bd55015393d224deec1073d63b24bcc0faad164/hindsight-api-slim/hindsight_api/engine/memory_engine.py#L16048",
+          "https://github.com/volcengine/OpenViking/blob/1bee73853e2400086632596198282f3c5d118312/openviking/retrieve/context_assembler/pipeline.py"
+        ]
+      },
+      {
+        "label": "采用条件",
+        "detail": "LangMem把持久化交给Store与应用；Anthropic文件工具由应用执行。较少组件也需验证任务收益和治理范围。",
+        "evidence": [
+          "https://github.com/langchain-ai/langmem/blob/8620b986af5b0c7593e6b7fbece2998690d22d15/src/langmem/knowledge/extraction.py",
+          "https://github.com/anthropics/anthropic-sdk-python/blob/4c7b598466b88559583f98216139be8e9b34c1fc/src/anthropic/lib/tools/_beta_builtin_memory_tool.py"
+        ]
+      }
+    ],
+    "boundary": "十框架是工程候选，不是性能前十；没有运行同条件模型、服务或benchmark。"
+  },
+  {
+    "lesson": "comparisons.ten-framework-lifecycle",
+    "title": "更正当前、撤回来源、清理副本",
+    "object": "三个检验工位对应当前事实、来源派生与历史副本；分别验收，不能把搜索为空当成所有数据已经清除。",
+    "kind": "bench",
+    "steps": [
+      {
+        "label": "当前事实",
+        "detail": "Graphiti保存有效区间，查询需约定过滤；Mem0默认新增和显式按ID更正是不同入口。",
+        "evidence": [
+          "https://github.com/getzep/graphiti/blob/747b480ec6b12ecb718f1e2bc588b20ee36ea9c2/graphiti_core/search/search_filters.py",
+          "https://github.com/mem0ai/mem0/blob/ed1f10fc87080f0b67f99be370817504888462ab/mem0/memory/main.py"
+        ]
+      },
+      {
+        "label": "来源派生",
+        "detail": "Memobase事件正文更新不自动重建gist；Cognee memory_only保留资料用于重建，应明确产品删除范围。",
+        "evidence": [
+          "https://github.com/memodb-io/memobase/blob/358c16bbc6d687937d79bc2f984a11c3be8da901/src/server/api/memobase_server/controllers/event.py",
+          "https://github.com/topoteretes/cognee/blob/8853378eae5366addb064e758e560a456146ae1a/cognee/api/v1/forget/forget.py"
+        ]
+      },
+      {
+        "label": "历史副本",
+        "detail": "Letta文件删除仍需考虑Git历史；Anthropic托管副本可保护未上传修改，远端删除后还要观察同步结果。",
+        "evidence": [
+          "https://github.com/letta-ai/letta-code/blob/e6d6cc27ef1111da80e919dc1cef179613894b66/src/agent/memory-git.ts",
+          "https://github.com/anthropics/anthropic-sdk-python/blob/4c7b598466b88559583f98216139be8e9b34c1fc/src/anthropic/lib/tools/_memories.py"
+        ]
+      }
+    ],
+    "boundary": "图解表达静态可见边界；更新、删除、并发与故障恢复场景尚未实跑。"
+  }
+]

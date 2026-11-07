@@ -1,0 +1,272 @@
+[
+  {
+    "lesson": "projects.hindsight.overview",
+    "title": "写入、取证、回答分属不同操作",
+    "object": "三座档案架分别表示事实保存、证据召回与只读回答；并列用于区分职责，不表示三种独立部署。",
+    "kind": "cabinet",
+    "steps": [
+      {
+        "label": "retain 保存事实",
+        "detail": "模型抽取事实、实体与时间，程序维护向量和来源关联；宿主选择何时提交和使用哪个 bank。",
+        "evidence": [
+          "https://github.com/vectorize-io/hindsight/blob/0bd55015393d224deec1073d63b24bcc0faad164/hindsight-api-slim/hindsight_api/engine/retain/orchestrator.py#L1617"
+        ]
+      },
+      {
+        "label": "recall 返回证据",
+        "detail": "默认 Postgres store 通过 recall_unified 组织各路检索，engine 再融合和重排；不是返回事实即完成宿主回答。",
+        "evidence": [
+          "https://github.com/vectorize-io/hindsight/blob/0bd55015393d224deec1073d63b24bcc0faad164/hindsight-api-slim/hindsight_api/engine/memories/postgres.py#L126"
+        ]
+      },
+      {
+        "label": "reflect 只读回答",
+        "detail": "服务中的模型用 lookup、recall、expand 等工具循环取证；回答本身不自动写成长期事实，归纳由其他维护负责。",
+        "evidence": [
+          "https://github.com/vectorize-io/hindsight/blob/0bd55015393d224deec1073d63b24bcc0faad164/hindsight-api-slim/hindsight_api/engine/memory_engine.py#L16048"
+        ]
+      }
+    ],
+    "boundary": "默认 tenant extension 不做认证；bank 是组织范围，实际授权需核对部署配置。本图没有运行质量或性能评测。"
+  },
+  {
+    "lesson": "projects.hindsight.write-storage",
+    "title": "提交关键事实，维护另有时点",
+    "object": "入纸盘、压印台和出纸盘分别表示候选处理、批次提交与提交后维护；位置不表示所有状态在同一事务。",
+    "kind": "press",
+    "steps": [
+      {
+        "label": "提取与增强",
+        "detail": "抽取事实后先应用可选过滤器，再进行日期增强与 embedding；模型判断与数据库写入分开。",
+        "evidence": [
+          "https://github.com/vectorize-io/hindsight/blob/0bd55015393d224deec1073d63b24bcc0faad164/hindsight-api-slim/hindsight_api/engine/retain/orchestrator.py#L1426"
+        ]
+      },
+      {
+        "label": "事务保护关键关联",
+        "detail": "默认 Postgres 路径在事务中写事实、unit_entities 和时间、语义、因果链接；outbox 登记可在同一事务。",
+        "evidence": [
+          "https://github.com/vectorize-io/hindsight/blob/0bd55015393d224deec1073d63b24bcc0faad164/hindsight-api-slim/hindsight_api/engine/retain/orchestrator.py#L879"
+        ]
+      },
+      {
+        "label": "流式恢复与后处理",
+        "detail": "已提交事实记录到 operation 检查点；大请求可多批提交，后续 ANN、整理和外部文件清理另有完成时点。",
+        "evidence": [
+          "https://github.com/vectorize-io/hindsight/blob/0bd55015393d224deec1073d63b24bcc0faad164/hindsight-api-slim/hindsight_api/engine/retain/orchestrator.py#L111"
+        ]
+      }
+    ],
+    "boundary": "批次事务不等于整个请求与所有归纳的统一原子提交；未运行崩溃、并发或重试实验。"
+  },
+  {
+    "lesson": "projects.hindsight.retrieval-lifecycle",
+    "title": "召回、排序与预算分别设关",
+    "object": "入纸盘表示分路候选，筛选台表示融合重排，出纸盘表示受预算约束的供给；尺寸不表示候选数量。",
+    "kind": "sorter",
+    "steps": [
+      {
+        "label": "存储组织召回",
+        "detail": "query analyzer 解析时间约束，再调用 store.recall_unified；关闭某路会跳过对应工作，时间路也可能没有窗口。",
+        "evidence": [
+          "https://github.com/vectorize-io/hindsight/blob/0bd55015393d224deec1073d63b24bcc0faad164/hindsight-api-slim/hindsight_api/engine/search/retrieval.py#L129"
+        ]
+      },
+      {
+        "label": "融合后可选重排",
+        "detail": "RRF 或 interleave 组合候选，cross encoder 与决策 prune、dedup 是可配置的额外处理，排序分不是事实准确率。",
+        "evidence": [
+          "https://github.com/vectorize-io/hindsight/blob/0bd55015393d224deec1073d63b24bcc0faad164/hindsight-api-slim/hindsight_api/engine/memory_engine.py#L10570"
+        ]
+      },
+      {
+        "label": "预算与删除维护",
+        "detail": "facts 与原文 chunks 有独立预算；删除来源后还调度归纳、知识页和图维护，应分别观察完成状态。",
+        "evidence": [
+          "https://github.com/vectorize-io/hindsight/blob/0bd55015393d224deec1073d63b24bcc0faad164/hindsight-api-slim/hindsight_api/engine/memory_engine.py#L11547"
+        ]
+      }
+    ],
+    "boundary": "时间窗口是时间路排序条件，不自动排除其他事实；本轮未测实际供给 token、费用和延迟。"
+  },
+  {
+    "lesson": "projects.graphiti.overview",
+    "title": "事件、实体、事实边各留证据",
+    "object": "三座档案架分别表示来源事件、归一实体与时间事实边；层板只提示状态类型，不表示数据库物理分层。",
+    "kind": "cabinet",
+    "steps": [
+      {
+        "label": "来源事件",
+        "detail": "episode 保存内容、来源、参考时间与关联事实；宿主负责真实时间和 group 范围。",
+        "evidence": [
+          "https://github.com/getzep/graphiti/blob/747b480ec6b12ecb718f1e2bc588b20ee36ea9c2/graphiti_core/nodes.py#L318"
+        ]
+      },
+      {
+        "label": "实体归一",
+        "detail": "add_episode 读取前序材料，模型抽取并解析实体 ID，再提取与解决关系；名称相同不自动等于同一人。",
+        "evidence": [
+          "https://github.com/getzep/graphiti/blob/747b480ec6b12ecb718f1e2bc588b20ee36ea9c2/graphiti_core/graphiti.py#L1471"
+        ]
+      },
+      {
+        "label": "事实边带时间",
+        "detail": "entity edge 保存事实文本、端点、支持事件与有效／失效时间，向量和程序规则辅助检索与维护。",
+        "evidence": [
+          "https://github.com/getzep/graphiti/blob/747b480ec6b12ecb718f1e2bc588b20ee36ea9c2/graphiti_core/edges.py#L263"
+        ]
+      }
+    ],
+    "boundary": "group_id 不是认证凭据；Graphiti core 的源码研究不代表 Zep 托管实现，也未测任务质量。"
+  },
+  {
+    "lesson": "projects.graphiti.write-storage",
+    "title": "先解决关系，再提交图对象",
+    "object": "三个工位表示语义解析、时间区间处理和图写入；模型推理与图事务的边界分别保留。",
+    "kind": "press",
+    "steps": [
+      {
+        "label": "处理重复来源",
+        "detail": "同批端点与事实规范化去重，查相关边；精确命中可复用旧边并增加 episode 来源，复杂情况由模型解析。",
+        "evidence": [
+          "https://github.com/getzep/graphiti/blob/747b480ec6b12ecb718f1e2bc588b20ee36ea9c2/graphiti_core/utils/maintenance/edge_operations.py#L424"
+        ]
+      },
+      {
+        "label": "应用时间失效",
+        "detail": "候选日期不重叠则跳过；较晚新事实可结束旧边，迟到旧事实也可被已有较晚事实限定。",
+        "evidence": [
+          "https://github.com/getzep/graphiti/blob/747b480ec6b12ecb718f1e2bc588b20ee36ea9c2/graphiti_core/utils/maintenance/edge_operations.py#L715"
+        ]
+      },
+      {
+        "label": "bulk 写入包",
+        "detail": "episode、实体、mentions 与事实边进入 driver.execute_write；community 可在主图提交后另行更新。",
+        "evidence": [
+          "https://github.com/getzep/graphiti/blob/747b480ec6b12ecb718f1e2bc588b20ee36ea9c2/graphiti_core/utils/bulk_utils.py#L128"
+        ]
+      }
+    ],
+    "boundary": "关系去重不是整个输入的幂等回执；模型账单、community 与宿主状态不全在一个图事务中。"
+  },
+  {
+    "lesson": "projects.graphiti.retrieval-lifecycle",
+    "title": "检索时间与删除来源分别验收",
+    "object": "三个切面表示配方选择、过滤范围和来源删除后的修复；并列用于检查不同责任，不表示统一事务。",
+    "kind": "sorter",
+    "steps": [
+      {
+        "label": "选检索配方",
+        "detail": "基础 search 默认事实边 BM25、cosine 与 RRF；高级 search_ 可取节点、事件、community 并使用 cross encoder。",
+        "evidence": [
+          "https://github.com/getzep/graphiti/blob/747b480ec6b12ecb718f1e2bc588b20ee36ea9c2/graphiti_core/graphiti.py#L1913"
+        ]
+      },
+      {
+        "label": "显式时间与范围",
+        "detail": "SearchFilters 提供有效、失效、创建与过期条件；未传过滤器不保证只返回当前关系，空 group 也不能当自动授权。",
+        "evidence": [
+          "https://github.com/getzep/graphiti/blob/747b480ec6b12ecb718f1e2bc588b20ee36ea9c2/graphiti_core/search/search_filters.py#L58"
+        ]
+      },
+      {
+        "label": "删除来源并修摘要",
+        "detail": "remove_episode 保留仍有来源的边，删除无其他提及的节点，并尝试重建存活实体摘要；摘要失败只记录。",
+        "evidence": [
+          "https://github.com/getzep/graphiti/blob/747b480ec6b12ecb718f1e2bc588b20ee36ea9c2/graphiti_core/graphiti.py#L2174"
+        ]
+      }
+    ],
+    "boundary": "删除不是统一事务；未确认自动恢复旧关系有效区间，community 和外部副本需另核对。"
+  },
+  {
+    "lesson": "projects.cognee.overview",
+    "title": "记忆 API 串联不同完成阶段",
+    "object": "三座档案架分别提示 session、原始资料与永久知识；并列区分存储责任，不表示实际服务器数量。",
+    "kind": "cabinet",
+    "steps": [
+      {
+        "label": "session 先保存",
+        "detail": "带 session_id 可先写缓存并返回 session_stored，再后台桥接永久图；桥接失败单独记录 improve_error。",
+        "evidence": [
+          "https://github.com/topoteretes/cognee/blob/8853378eae5366addb064e758e560a456146ae1a/cognee/api/v1/remember/remember.py#L2153"
+        ]
+      },
+      {
+        "label": "永久记忆构建",
+        "detail": "不带 session 的主线顺序执行 add、cognify 和可选 improve；资料写入、早期搜索与完整图有不同里程碑。",
+        "evidence": [
+          "https://github.com/topoteretes/cognee/blob/8853378eae5366addb064e758e560a456146ae1a/cognee/api/v1/remember/remember.py#L2220"
+        ]
+      },
+      {
+        "label": "按配置决定成本",
+        "detail": "当前默认早索引、从抽取结果生成摘要，提取器 auto 按可用 LLM 选择模型或 GLiNER demo。",
+        "evidence": [
+          "https://github.com/topoteretes/cognee/blob/8853378eae5366addb064e758e560a456146ae1a/cognee/modules/cognify/config.py#L15"
+        ]
+      }
+    ],
+    "boundary": "本地 API 与远程服务有参数边界；未运行后端、模型与界面验收，不将启动回执当全部完成。"
+  },
+  {
+    "lesson": "projects.cognee.write-storage",
+    "title": "先可搜索，再提取知识图",
+    "object": "入纸盘、压印台与出纸盘分别表示资料身份、两段构建和来源恢复；并不表示一个跨库事务。",
+    "kind": "press",
+    "steps": [
+      {
+        "label": "资料有独立身份",
+        "detail": "Data 用 UUID 保存身份，hash 用于 dataset、owner 范围重复查询；保留文件位置与 pipeline 状态。",
+        "evidence": [
+          "https://github.com/topoteretes/cognee/blob/8853378eae5366addb064e758e560a456146ae1a/cognee/modules/data/models/Data.py#L10"
+        ]
+      },
+      {
+        "label": "双阶段可见",
+        "detail": "indexing 先存 chunk 和向量，cognify 再提取图并复用已生成向量；知识提取失败可能仍保留 chunk 搜索。",
+        "evidence": [
+          "https://github.com/topoteretes/cognee/blob/8853378eae5366addb064e758e560a456146ae1a/cognee/api/v1/cognify/cognify.py#L690"
+        ]
+      },
+      {
+        "label": "来源帮助回滚",
+        "detail": "按 run 和 dataset 撤销来源或清理独占产物，先删除图向量再清 ledger 与状态，使失败重试保留依据。",
+        "evidence": [
+          "https://github.com/topoteretes/cognee/blob/8853378eae5366addb064e758e560a456146ae1a/cognee/modules/cognify/rollback.py#L92"
+        ]
+      }
+    ],
+    "boundary": "图、向量与关系库不普遍共享分布式事务；额外审计 provenance 与基础 ownership 不应混同。"
+  },
+  {
+    "lesson": "projects.cognee.retrieval-lifecycle",
+    "title": "读、改进、遗忘各有完成条件",
+    "object": "三个检验工位分别核对检索供给、维护阶段与删除目标；不表示实际性能读数或一次串行调用。",
+    "kind": "bench",
+    "steps": [
+      {
+        "label": "recall 选择来源",
+        "detail": "scope 决定 session、图等通道；规则路由选检索类型，Hybrid 组合 chunk 与实体关系并可在库内生成答案。",
+        "evidence": [
+          "https://github.com/topoteretes/cognee/blob/8853378eae5366addb064e758e560a456146ae1a/cognee/api/v1/recall/recall.py#L549"
+        ]
+      },
+      {
+        "label": "improve 分阶段",
+        "detail": "维护先检查数据和模型条件，部分阶段失败可继续，session QA 持久化失败致命；需要读取每阶段结果。",
+        "evidence": [
+          "https://github.com/topoteretes/cognee/blob/8853378eae5366addb064e758e560a456146ae1a/cognee/api/v1/improve/improve.py#L141"
+        ]
+      },
+      {
+        "label": "forget 选择目标",
+        "detail": "memory_only 保留原始资料供重建，单资料默认保留搜索历史；删除逻辑记录不等于底层存储字节擦除。",
+        "evidence": [
+          "https://github.com/topoteretes/cognee/blob/8853378eae5366addb064e758e560a456146ae1a/cognee/api/v1/forget/forget.py#L24"
+        ]
+      }
+    ],
+    "boundary": "缓存、反馈、路由和维护开关必须进入评测配置；本轮没有任务正确率、费用或延迟结果。"
+  }
+]

@@ -1,0 +1,96 @@
+[
+  {
+    "lesson": "projects.anthropic.overview",
+    "title": "同一个 SDK，三种状态归属",
+    "object": "三座档案架分别对应应用文件、托管记忆与当前会话；位置只用于区分状态归属，不表示三个组件串行部署。",
+    "kind": "cabinet",
+    "steps": [
+      {
+        "label": "应用内工具",
+        "detail": "模型请求文件操作，应用执行本地 handler。默认写入自己的 memory 目录，也可以通过抽象接口更换后端。",
+        "evidence": [
+          "https://github.com/anthropics/anthropic-sdk-python/blob/4c7b598466b88559583f98216139be8e9b34c1fc/src/anthropic/lib/tools/_beta_builtin_memory_tool.py#L56-L164"
+        ]
+      },
+      {
+        "label": "托管记忆",
+        "detail": "Memory Stores 客户端发出 HTTP 请求，服务端持久化实现不在 SDK 内；自托管副本还需要同步。",
+        "evidence": [
+          "https://github.com/anthropics/anthropic-sdk-python/blob/4c7b598466b88559583f98216139be8e9b34c1fc/src/anthropic/resources/beta/memory_stores/memory_stores.py#L74",
+          "https://github.com/anthropics/anthropic-sdk-python/blob/4c7b598466b88559583f98216139be8e9b34c1fc/src/anthropic/lib/tools/_memories.py#L163"
+        ]
+      },
+      {
+        "label": "当前会话",
+        "detail": "压缩和工具结果清理控制本次推理的有效上下文，不自动等于创建或删除一条长期记忆。",
+        "evidence": [
+          "https://github.com/anthropics/anthropic-sdk-python/blob/4c7b598466b88559583f98216139be8e9b34c1fc/src/anthropic/types/beta/message_create_params.py#L138-L158"
+        ]
+      }
+    ],
+    "boundary": "只核验官方 SDK 的客户端和本地实现；没有启动托管服务或真实模型。"
+  },
+  {
+    "lesson": "projects.anthropic.tool-lifecycle",
+    "title": "文件修改、同步与删除分别确认",
+    "object": "入纸盘表示本地编辑，压印台表示条件同步，出纸盘表示历史与副本检查；它们不是一次全局事务。",
+    "kind": "press",
+    "steps": [
+      {
+        "label": "本地编辑",
+        "detail": "精确替换要求旧字符串只出现一次；同目录临时文件替换防止半写，不提供多写入者版本合并。",
+        "evidence": [
+          "https://github.com/anthropics/anthropic-sdk-python/blob/4c7b598466b88559583f98216139be8e9b34c1fc/src/anthropic/lib/tools/_beta_builtin_memory_tool.py#L282-L304",
+          "https://github.com/anthropics/anthropic-sdk-python/blob/4c7b598466b88559583f98216139be8e9b34c1fc/src/anthropic/lib/tools/_beta_builtin_memory_tool.py#L501-L547"
+        ]
+      },
+      {
+        "label": "条件同步",
+        "detail": "基线、本地与远端内容 hash 决定同步方向；两端都改时采用远端，丢失响应通过后续 listing 对账。",
+        "evidence": [
+          "https://github.com/anthropics/anthropic-sdk-python/blob/4c7b598466b88559583f98216139be8e9b34c1fc/src/anthropic/lib/tools/_memories.py#L616"
+        ]
+      },
+      {
+        "label": "删除范围",
+        "detail": "本地缺失有确认窗口与上限；远端删除遇到唯一未上传副本时可能重建，历史版本另有 redact 接口。",
+        "evidence": [
+          "https://github.com/anthropics/anthropic-sdk-python/blob/4c7b598466b88559583f98216139be8e9b34c1fc/src/anthropic/lib/tools/_memories.py#L163",
+          "https://github.com/anthropics/anthropic-sdk-python/blob/4c7b598466b88559583f98216139be8e9b34c1fc/src/anthropic/resources/beta/memory_stores/memory_versions.py#L261"
+        ]
+      }
+    ],
+    "boundary": "静态控制流和上游测试阅读；没有复跑并发、故障恢复或云端删除。"
+  },
+  {
+    "lesson": "projects.anthropic.context-management",
+    "title": "外部保留、按需读回、压缩会话",
+    "object": "三座档案架对应长期内容、读取结果与压缩后的会话；位置表示完成点，不表示内容必定完整保留。",
+    "kind": "cabinet",
+    "steps": [
+      {
+        "label": "外部保留",
+        "detail": "Memory Tool 把模型选择的内容写到窗口外。开启工具不保证每条消息都保存，也不保证记忆语义正确。",
+        "evidence": [
+          "https://github.com/anthropics/anthropic-sdk-python/blob/4c7b598466b88559583f98216139be8e9b34c1fc/src/anthropic/lib/tools/_beta_builtin_memory_tool.py#L483-L499"
+        ]
+      },
+      {
+        "label": "按需读回",
+        "detail": "应用执行读取并把 tool_result 交回模型，文件存在、读取成功与回答正确是不同观察点。",
+        "evidence": [
+          "https://github.com/anthropics/anthropic-sdk-python/blob/4c7b598466b88559583f98216139be8e9b34c1fc/examples/memory/basic.py#L167-L231"
+        ]
+      },
+      {
+        "label": "压缩会话",
+        "detail": "阈值压缩与显式按需压缩是不同请求；顶层 compaction 不与 context_management 在同次请求中并用。",
+        "evidence": [
+          "https://github.com/anthropics/anthropic-sdk-python/blob/4c7b598466b88559583f98216139be8e9b34c1fc/src/anthropic/types/beta/message_create_params.py#L138-L158",
+          "https://github.com/anthropics/anthropic-sdk-python/blob/4c7b598466b88559583f98216139be8e9b34c1fc/src/anthropic/types/beta/beta_compaction_config_param.py#L9"
+        ]
+      }
+    ],
+    "boundary": "参数和示例可读不等于服务端摘要算法开源；未测得压缩质量或 token 收益。"
+  }
+]

@@ -1,0 +1,186 @@
+[
+  {
+    "lesson": "projects.langmem.overview",
+    "title": "原语、存储与宿主的分工",
+    "kind": "cabinet",
+    "object": "三座档案架分别表示记忆原语、存储和宿主模型；并列位置区分职责，不表示实际部署节点。",
+    "boundary": "固定版本静态源码；未运行 Store 或模型，部署图与进程内库的边界分开核验。",
+    "steps": [
+      {
+        "label": "记忆原语",
+        "detail": "模型可主动调用管理工具；应用也能调用 StoreManager 自动提取。两种入口不等价，工具本身不再发起提取模型调用。",
+        "evidence": [
+          "https://github.com/langchain-ai/langmem/blob/8620b986af5b0c7593e6b7fbece2998690d22d15/src/langmem/knowledge/tools.py#L263-L355"
+        ]
+      },
+      {
+        "label": "存储实现",
+        "detail": "StoreManager 接收 BaseStore 或读取 LangGraph 上下文；实际持久性、索引和相似度算法由选定的 Store 承担。",
+        "evidence": [
+          "https://github.com/langchain-ai/langmem/blob/8620b986af5b0c7593e6b7fbece2998690d22d15/src/langmem/knowledge/extraction.py#L832-L914"
+        ]
+      },
+      {
+        "label": "上下文供给",
+        "detail": "搜索工具返回序列化结果或 artifact，宿主负责把它交给回答模型。查到记录与回答正确是不同验收点。",
+        "evidence": [
+          "https://github.com/langchain-ai/langmem/blob/8620b986af5b0c7593e6b7fbece2998690d22d15/src/langmem/knowledge/tools.py#L433-L497"
+        ]
+      }
+    ]
+  },
+  {
+    "lesson": "projects.langmem.write-storage",
+    "title": "召回候选后才决定修改",
+    "kind": "press",
+    "object": "入纸盘代表候选记忆，压印台代表模型提取与整理，出纸盘代表写入；三处不是同一个事务。",
+    "boundary": "候选召回受 query_limit 限制；异步多项写入未在 LangMem 层建立共同事务。",
+    "steps": [
+      {
+        "label": "检索旧记录",
+        "detail": "多路搜索按 namespace/key 去重并排序，既有记录地址映射为稳定 ID；没有被召回的旧说法无法参加本次合并。",
+        "evidence": [
+          "https://github.com/langchain-ai/langmem/blob/8620b986af5b0c7593e6b7fbece2998690d22d15/src/langmem/knowledge/extraction.py#L936-L1041"
+        ]
+      },
+      {
+        "label": "模型提取",
+        "detail": "结构化提取器将消息和旧记忆转为新增、更新或删除；可选 phases 在落盘前继续合并整理。",
+        "evidence": [
+          "https://github.com/langchain-ai/langmem/blob/8620b986af5b0c7593e6b7fbece2998690d22d15/src/langmem/knowledge/extraction.py#L1065-L1100"
+        ]
+      },
+      {
+        "label": "差异落盘",
+        "detail": "变化的旧记录沿原键覆盖，新记录用新键；put 与 delete 并行执行，部分成功不会由该层自动回滚。",
+        "evidence": [
+          "https://github.com/langchain-ai/langmem/blob/8620b986af5b0c7593e6b7fbece2998690d22d15/src/langmem/knowledge/extraction.py#L1102-L1137"
+        ]
+      }
+    ]
+  },
+  {
+    "lesson": "projects.langmem.retrieval-lifecycle",
+    "title": "搜索、排队与遗忘各有边界",
+    "kind": "bench",
+    "object": "三个检验工位对应检索供给、后台反思和删除传播；并列观察不表示依次执行。",
+    "boundary": "本地队列在内存，取消后的退出分支仍可能执行任务；仅静态源码核验，未运行模型或复现停写边界。",
+    "steps": [
+      {
+        "label": "搜索供给",
+        "detail": "搜索工具将 namespace、过滤、分页等参数交给 Store，并返回结果；最终聊天仍由宿主调用模型。",
+        "evidence": [
+          "https://github.com/langchain-ai/langmem/blob/8620b986af5b0c7593e6b7fbece2998690d22d15/src/langmem/knowledge/tools.py#L433-L497"
+        ]
+      },
+      {
+        "label": "反思排队",
+        "detail": "本地执行器按 thread_id 尝试取消旧任务；退出 drain 不复查取消状态仍调用反思，因此不能保证取消后停写，更不能撤回已写入状态。",
+        "evidence": [
+          "https://github.com/langchain-ai/langmem/blob/8620b986af5b0c7593e6b7fbece2998690d22d15/src/langmem/reflection.py#L369-L379",
+          "https://github.com/langchain-ai/langmem/blob/8620b986af5b0c7593e6b7fbece2998690d22d15/src/langmem/reflection.py#L451-L471"
+        ]
+      },
+      {
+        "label": "删除范围",
+        "detail": "manager.delete 删除 Store 内的 namespace/key；宿主会话、摘要、备份和已进入模型的上下文不由这次调用统一撤回。",
+        "evidence": [
+          "https://github.com/langchain-ai/langmem/blob/8620b986af5b0c7593e6b7fbece2998690d22d15/src/langmem/knowledge/extraction.py#L1471-L1478"
+        ]
+      }
+    ]
+  },
+  {
+    "lesson": "projects.memobase.overview",
+    "title": "服务中的画像与事件分工",
+    "kind": "cabinet",
+    "object": "三座档案架分别表示原始材料、画像和事件；位置用于说明数据职责，不代表彼此独立部署。",
+    "boundary": "固定版本开源服务静态研究；原始聊天默认可在处理后删除，未运行托管服务。",
+    "steps": [
+      {
+        "label": "接收材料",
+        "detail": "HTTP 先提交 blob 再增加 buffer；insert 返回 ID 还不能证明画像已可检索，低于阈值也不会强制提取。",
+        "evidence": [
+          "https://github.com/memodb-io/memobase/blob/358c16bbc6d687937d79bc2f984a11c3be8da901/src/server/api/memobase_server/api_layer/blob.py#L42-L98"
+        ]
+      },
+      {
+        "label": "整理画像",
+        "detail": "处理主线先摘要，再提取主题并调用 merge_yolo；画像保存 content 与 topic/sub_topic 等属性，表达用户当前背景。",
+        "evidence": [
+          "https://github.com/memodb-io/memobase/blob/358c16bbc6d687937d79bc2f984a11c3be8da901/src/server/api/memobase_server/controllers/modal/chat/__init__.py#L40-L136"
+        ]
+      },
+      {
+        "label": "供给经历",
+        "detail": "context 并行读取画像与事件 gist，裁剪后返回字符串；宿主仍决定怎样交给最终回答模型。",
+        "evidence": [
+          "https://github.com/memodb-io/memobase/blob/358c16bbc6d687937d79bc2f984a11c3be8da901/src/server/api/memobase_server/controllers/context.py#L125-L222"
+        ]
+      }
+    ]
+  },
+  {
+    "lesson": "projects.memobase.write-storage",
+    "title": "状态提交分布在多个阶段",
+    "kind": "press",
+    "object": "入纸盘是输入与缓冲，压印台是模型加工，出纸盘是事件和画像；结构强调不同完成点。",
+    "boundary": "多阶段存在部分成功；未执行并发、重试或崩溃实验，不能声称恰好一次。",
+    "steps": [
+      {
+        "label": "两次入库",
+        "detail": "GeneralBlob 和 BufferZone 分别提交。第二步失败不会自动撤销第一步；重复文本没有接收层内容幂等键。",
+        "evidence": [
+          "https://github.com/memodb-io/memobase/blob/358c16bbc6d687937d79bc2f984a11c3be8da901/src/server/api/memobase_server/controllers/blob.py#L10-L27",
+          "https://github.com/memodb-io/memobase/blob/358c16bbc6d687937d79bc2f984a11c3be8da901/src/server/api/memobase_server/controllers/buffer.py#L33-L47"
+        ]
+      },
+      {
+        "label": "生成派生记忆",
+        "detail": "聊天先摘要，画像与事件标签并行加工，然后先保存事件再更新画像；两个保存阶段没有共同事务。",
+        "evidence": [
+          "https://github.com/memodb-io/memobase/blob/358c16bbc6d687937d79bc2f984a11c3be8da901/src/server/api/memobase_server/controllers/modal/chat/__init__.py#L67-L136"
+        ]
+      },
+      {
+        "label": "完成与清理",
+        "detail": "成功标记 done，失败标记 failed；未配置保留原始聊天时会删除 blob。embedding 失败仍可存下没有向量的事件。",
+        "evidence": [
+          "https://github.com/memodb-io/memobase/blob/358c16bbc6d687937d79bc2f984a11c3be8da901/src/server/api/memobase_server/controllers/buffer.py#L188-L259",
+          "https://github.com/memodb-io/memobase/blob/358c16bbc6d687937d79bc2f984a11c3be8da901/src/server/api/memobase_server/controllers/event.py#L84-L164"
+        ]
+      }
+    ]
+  },
+  {
+    "lesson": "projects.memobase.retrieval-lifecycle",
+    "title": "上下文、后台与撤回边界",
+    "kind": "bench",
+    "object": "三个工位分别检验上下文内容、后台完成和更正传播；不表示每个请求都走完三个工位。",
+    "boundary": "静态源码可见的更新并不统一刷新 gist；项目鉴权与终端用户授权需要分开验收。",
+    "steps": [
+      {
+        "label": "两路上下文",
+        "detail": "画像按主题和预算裁剪；事件 gist 根据最近聊天语义搜索，或按时间读取，最后组合成 context。",
+        "evidence": [
+          "https://github.com/memodb-io/memobase/blob/358c16bbc6d687937d79bc2f984a11c3be8da901/src/server/api/memobase_server/controllers/context.py#L29-L222"
+        ]
+      },
+      {
+        "label": "后台完成",
+        "detail": "SQL 先标 processing，再向 Redis 入队；用户锁可串行化后台处理，但跨系统失败仍可能留下未完成状态。",
+        "evidence": [
+          "https://github.com/memodb-io/memobase/blob/358c16bbc6d687937d79bc2f984a11c3be8da901/src/server/api/memobase_server/controllers/buffer_background.py#L44-L112"
+        ]
+      },
+      {
+        "label": "更正传播",
+        "detail": "事件更新仅修改 event_data，不在该函数重建向量或 gist；删除原始 blob 也不会自动撤回独立画像与事件。",
+        "evidence": [
+          "https://github.com/memodb-io/memobase/blob/358c16bbc6d687937d79bc2f984a11c3be8da901/src/server/api/memobase_server/controllers/event.py#L186-L213",
+          "https://github.com/memodb-io/memobase/blob/358c16bbc6d687937d79bc2f984a11c3be8da901/src/server/api/memobase_server/controllers/blob.py#L48-L61"
+        ]
+      }
+    ]
+  }
+]

@@ -4,7 +4,17 @@
 
 目标是能沿源码讲清楚：**谁决定记什么，数据由谁持有，何时能被找回，发生冲突后如何更正，以及这些记忆怎样影响下一次模型调用。**
 
-> 已完成ReMe、Mem0与当前Letta Code三个固定版本的源码主线，保留四篇双项目比较并新增四篇三方比较，共53个知识点：48篇源码核验、3篇局部实验验证、2篇待运行方案。没有三套系统同环境的真实模型端到端评测结论。
+> 已覆盖十个工程候选框架，保留 ReMe 并加入 Anthropic 官方 SDK 对照，共 12 个固定源码项目、82 个知识点、82 张 SVG：77 篇源码核验、3 篇既有局部实验、2 篇待运行方案。本轮新增 29 篇，经多 agent 拆解和交叉审阅；没有十框架同环境的真实模型端到端排名。
+
+## 十框架源码研究（2026-11-07）
+
+本次“十框架”指工程选型候选：Hindsight、Mem0、Graphiti、Letta Code、OpenViking、Cognee、MemOS、EverOS、LangMem、Memobase，不是 AML 比赛前十或全行业性能名次。8 个新增框架各有系统边界、写入存储、检索生命周期三篇；复用已有 Mem0、Letta 各十篇，并拉取最新上游核对差异。Anthropic 额外三篇分别解释工具与托管边界、文件与副本同步、上下文管理。
+
+先读 [十框架架构总览](docs/comparisons/ten-framework-architecture.md) 与 [更正和删除比较](docs/comparisons/ten-framework-lifecycle.md)，再进入具体项目。网页直达：[十框架总览](https://giraffe-tree.github.io/memory-base/#/lesson/comparisons.ten-framework-architecture)、[生命周期比较](https://giraffe-tree.github.io/memory-base/#/lesson/comparisons.ten-framework-lifecycle)、[Anthropic 对照](https://giraffe-tree.github.io/memory-base/#/lesson/projects.anthropic.overview)。
+
+当前源码揭示的关键边界包括：Hindsight reflect 只读；Graphiti 默认搜索不自动限定当前有效事实；OpenViking 当前单次全局召回与预算内上下文组装分开；EverOS 已变更架构且部分算法来自独立依赖；LangMem 的直接构造与工厂默认不同；Memobase 事件、gist 和画像不能视为同一更新单元。各结论的条件和证据在正文中展开，不视作全项目能力缺失。
+
+源码仍为 `refernece/` 下的独立 Git 工作副本，不提交上游代码、Git 子模块或上游安装产物。固定版本由 [revisions.yaml](sources/revisions.yaml) 管理，实际拉取版本与研究版本分别记在 [本轮获取记录](sources/acquisition-2026-11-07.json)。Mem0/Letta 旧研究 SHA 保持不变；latest 差异和审阅修正见 [研究记录](sources/research-log.md)。本轮只做源码与测试阅读，没有执行上游测试、模型、托管 API 或 benchmark。
 
 ## 打开学习手册
 
@@ -22,7 +32,7 @@ npm run dev
 
 打开 [Memory Base 本地学习手册](http://127.0.0.1:8770/#/overview)，也可直接阅读 [认识 ReMe](http://127.0.0.1:8770/#/lesson/foundations.start.reme)、[Mem0 系统边界](http://127.0.0.1:8770/#/lesson/projects.mem0.overview)、[Letta研究](http://127.0.0.1:8770/#/lesson/projects.letta.overview) 或 [三方架构对照](http://127.0.0.1:8770/#/lesson/comparisons.three-way-architecture)。默认端口为 8770，避免占用参考手册的 8769。
 
-网页提供分组目录、项目与全文搜索组合筛选、前后篇、源码来源、章节索引、折叠自测、按项目区分的交互链路图和本机学习进度。比较页按声明展示两个或三个项目各自的固定版本与来源。可以直接在目录、正文顶部／底部或学习记录弹窗勾选“已知道”，无需先打开每篇文章；标记可撤销，阅读不会自动完成课程。数据使用localStorage保存在当前浏览器的当前站点，刷新后保留，同源标签同步；沿用原v1记录，不上传服务器。清除网站数据后记录会丢失；存储不可用或旧数据损坏时页面会明确提示，不冒充已经保存。
+网页提供分组目录、项目与全文搜索组合筛选、前后篇、源码来源、章节索引、折叠自测、按项目区分的交互链路图和本机学习进度。比较页按声明展示相关项目各自的固定版本与来源，十框架比较另含 Anthropic 对照。可以直接在目录、正文顶部／底部或学习记录弹窗勾选“已知道”，无需先打开每篇文章；标记可撤销，阅读不会自动完成课程。数据使用localStorage保存在当前浏览器的当前站点，刷新后保留，同源标签同步；沿用原v1记录，不上传服务器。清除网站数据后记录会丢失；存储不可用或旧数据损坏时页面会明确提示，不冒充已经保存。
 
 ## 研究基线与验证范围
 
@@ -30,13 +40,26 @@ npm run dev
 - Mem0 源码位于 `refernece/mem0/`，固定 commit 为 `ed1f10fc87080f0b67f99be370817504888462ab`。主要研究 Python OSS；HostedClient、REST与TypeScript表面分别标明可见范围。研究核验日期为2026-11-04。
 - Letta当前源码位于 `refernece/letta-code/`，固定commit `e6d6cc27ef1111da80e919dc1cef179613894b66`。原 `letta-ai/letta` 已变为入口页，指向当前letta-code；本研究不使用旧V1 archive作为现状。LocalBackend实现与Cloud API可见边界分别说明。
 - 本地上游为独立 Git 工作副本，主仓库忽略该目录。首次获取按下方“获取与每日更新源码”操作；上游没有研究性修改。
-- 已覆盖基础入口10页、项目研究30页、横向比较8页、实验5页。目录和基线分别见 [catalog.yaml](curriculum/catalog.yaml) 与 [revisions.yaml](sources/revisions.yaml)。
+- 新增 8 个框架与 Anthropic SDK 的基线见下表；所有上游均为未修改的独立工作副本。
+- 已覆盖基础入口10页、项目研究57页、横向比较10页、实验5页。目录和基线分别见 [catalog.yaml](curriculum/catalog.yaml) 与 [revisions.yaml](sources/revisions.yaml)。
 - 配置与路径 helper 的 13 个局部样本实际通过，使用合成输入和临时工作区；没有启动完整 ReMe、模型或服务。当前 Python 实验环境与上游完整依赖声明不同，具体版本与局限见 [实验页](experiments/configuration-boundaries/README.md)。
 - Mem0排序与SQLite真实模块的17个合成局部样本通过，未构造Memory或启动模型／向量服务，见 [Mem0局部实验](experiments/mem0-local-boundaries/README.md)。
 - Letta三个真实TS辅助模块转译后执行20个合成样本通过，只核验MemFS格式、路径分类与树约束，没有构造Agent或运行Git／Cloud／模型，见 [Letta局部实验](experiments/letta-memory-constraints/README.md)。
 - 重复写入与事实更新已有实验方案，状态为“待验证”；读过上游测试不算本轮运行通过。没有测得 token 收益、回答质量或部署延迟。
 
-常用检查（严格内容检查需要先获取三个固定版本的上游源码）：
+| 新增项目 | 研究 SHA（完整值见 revisions.yaml） | 源码拆解 |
+| --- | --- | --- |
+| Hindsight | `0bd55015393d` | [系统边界](docs/projects/hindsight/01-overview.md) |
+| Graphiti | `747b480ec6b1` | [系统边界](docs/projects/graphiti/01-overview.md) |
+| Cognee | `8853378eae53` | [系统边界](docs/projects/cognee/01-overview.md) |
+| OpenViking | `1bee73853e24` | [系统边界](docs/projects/openviking/01-overview.md) |
+| EverOS | `80ef766b690d` | [系统边界](docs/projects/everos/01-overview.md) |
+| MemOS | `d326a6419467` | [系统边界](docs/projects/memos/01-overview.md) |
+| LangMem | `8620b986af5b` | [系统边界](docs/projects/langmem/01-overview.md) |
+| Memobase | `358c16bbc6d6` | [系统边界](docs/projects/memobase/01-overview.md) |
+| Anthropic SDK 对照 | `4c7b598466b8` | [工具、托管与上下文](docs/projects/anthropic/01-overview.md) |
+
+常用检查（严格内容检查需要先获取全部 12 个固定源码版本）：
 
 ```bash
 npm run check
@@ -51,7 +74,7 @@ node experiments/letta-memory-constraints/run.mjs
 
 ## GitHub Pages 发布
 
-推送到 `main` 后，[Pages 工作流](.github/workflows/pages.yml) 自动安装锁定依赖、根据 `sources/revisions.yaml` 临时获取三个固定版本的上游源码、执行学习状态与证据链接测试、内容与 TypeScript 校验，并以 `/memory-base/` 为路径构建和发布 `dist/`。也可以在仓库 Actions 中手动触发。
+推送到 `main` 后，[Pages 工作流](.github/workflows/pages.yml) 自动安装锁定依赖、根据 `sources/revisions.yaml` 临时获取全部固定版本的上游源码、执行学习状态与证据链接测试、内容与 TypeScript 校验，并以 `/memory-base/` 为路径构建和发布 `dist/`。也可以在仓库 Actions 中手动触发。
 
 `refernece/` 仍不提交、不推送，也不包含在发布产物中。CI 获取源码只用于校验版本和文件路径，不安装或执行上游项目。日常拉取最新代码与更新文档的研究基线分别管理。
 
@@ -59,7 +82,7 @@ node experiments/letta-memory-constraints/run.mjs
 
 ## 获取与每日更新源码
 
-`refernece/` 整个目录不提交、不推送。首次在新机器获取研究基线：
+`refernece/` 整个目录不提交、不推送。首次在新机器获取全部研究基线，优先运行 `npm ci` 和 `npm run sources:prepare`，脚本按 manifest 获取全部固定版本并保护已有目录。以下为三个已有项目的手动获取示例：
 
 ```bash
 git clone https://github.com/agentscope-ai/ReMe.git refernece/ReMe
@@ -98,18 +121,9 @@ Memory Base 规划四个阅读入口，共用同一批文章与来源：
 
 研究重点先放在应用层、Agent 层的外部记忆。参数记忆、模型训练与底层数据库原理作为必要背景展开；会话历史、checkpoint、RAG、长期记忆分别定义，避免仅按名称归为同一类。
 
-## 第一批研究对象
+## 研究对象与阅读入口
 
-已覆盖ReMe、Mem0与当前Letta Code的源码主线、双项目和三方比较，运行验收仍需按上述范围补充。后续逐步引入其他项目；下表不构成行业完整名单，尚未研究项目仅列候选问题。
-
-| 项目 | 希望验证的问题 | 计划顺序 |
-| --- | --- | --- |
-| [ReMe](https://github.com/agentscope-ai/ReMe) | 经历、记忆文件、整理任务与检索索引如何衔接？哪些数据是事实来源，哪些可以重建？ | 已完成源码主线 |
-| [Mem0](https://github.com/mem0ai/mem0) | 记忆提取、增删改决策、作用域与检索如何实现？SDK 与服务分别承担什么？ | 已完成源码主线与对比 |
-| [Letta Code](https://github.com/letta-ai/letta-code) | MemFS已提交core怎样进入模型，渐进读取与历史检索如何分工？本地与Cloud边界在哪里？ | 已完成源码主线与三方比较 |
-| [Graphiti](https://github.com/getzep/graphiti) | 事件如何形成实体与关系？如何表达时间、事实变化及其来源？ | 后续扩展 |
-| [MemOS](https://github.com/MemTensor/MemOS) | 记忆如何组织、调度和持久化？不同表示与生命周期如何协作？ | 后续扩展 |
-| [LangMem](https://github.com/langchain-ai/langmem) | 记忆提取与维护如何嵌入应用运行时？运行时、存储层与应用各自负责什么？ | 后续扩展 |
+本轮已覆盖十个工程候选，额外保留 ReMe 和 Anthropic SDK 对照。已有 ReMe、Mem0、Letta 各十个切面；新增九组各三篇，按系统边界、写入存储、检索生命周期组织。十框架矩阵比较调用与状态归属，研究范围不等于完整全仓审计。具体入口见上方基线表、[课程目录](curriculum/catalog.yaml) 和 [架构总览](docs/comparisons/ten-framework-architecture.md)。
 
 每个项目必须固定到具体 commit。开源库、托管服务、论文方案分开记录；未开放的服务端实现，只描述官方可确认或黑盒实测的行为。Graphiti 的研究结果也不自动代表 Zep 托管产品的全部实现。
 
@@ -144,7 +158,7 @@ Memory Base 规划四个阅读入口，共用同一批文章与来源：
 
 建议把研究正文保存为 Markdown，把阅读顺序放进课程目录，由构建过程生成网页数据。网页是这些内容的阅读入口，避免另外维护一份完整正文。
 
-以下为内容组织结构。ReMe、Mem0、Letta、基础页、比较、实验与网页已创建；其他项目将在后续研究中加入：
+以下为内容组织结构；完整项目列表以课程目录和源码基线为准：
 
 ```text
 memory-base/
@@ -211,7 +225,7 @@ memory-base/
 
 ## 知识点图解
 
-现有 53 个知识点均配有可下载 SVG，覆盖基础、三个项目、横向比较和实验。每图三个切面可点击或用方向键切换，说明和源码证据随选择同步；独立 SVG 保留完整说明、成立边界及可点击来源。图解采用四种共享实体隐喻，位置表示职责或比较切面，不代表实际部署拓扑，部件数量与尺寸不表示运行测量。待验证实验仍只展示方案。
+现有 82 个知识点均配有可下载 SVG，覆盖基础、12 个固定源码项目、横向比较和实验。每图三个切面可点击或用方向键切换，说明和源码证据随选择同步；独立 SVG 保留完整说明、成立边界及可点击来源。图解采用四种共享实体隐喻，位置表示职责或比较切面，不代表实际部署拓扑，部件数量与尺寸不表示运行测量。待验证实验仍只展示方案。
 
 图解内容与维护方式见 [illustrations/README.md](illustrations/README.md)。修改后运行 `npm run build`，会重新生成 SVG，并检查知识点覆盖、文字长度与固定源码链接；结构校验不能替代语义审阅。
 
@@ -250,4 +264,4 @@ memory-base/
 | 3 · 第二项目 | Mem0 拆解与首份横向比较 | 两个项目使用共同输入，能解释机制差异、代价与适用条件 |
 | 4 · 扩展研究 | 按问题引入其他项目 | 每加入一个项目，都带来已有样本无法解释的新设计；维护版本基线与失效证据 |
 
-当前已交付三个项目的源码主线、阅读站、双项目与三方源码比较。完整运行时与真实模型实验尚未完成。下一步固定两边模型、后端、输入与预算，先验证重复提交与事实更正，再观察实际检索和上下文供给；之后按问题引入Graphiti或其他设计。历次基线、分工、失败及验收记录见 [研究记录](sources/research-log.md)。
+当前已交付十框架及 ReMe、Anthropic 对照的源码研究、阅读站与逐条证据矩阵。完整运行时与真实模型实验尚未完成。下一步从实际任务选择候选，固定模型、后端、输入与预算，先验证重复提交、事实更正和删除传播，再观察实际检索、上下文供给与最终任务收益。历次基线、分工、失败及验收记录见 [研究记录](sources/research-log.md)。

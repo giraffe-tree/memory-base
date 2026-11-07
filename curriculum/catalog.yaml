@@ -1,94 +1,163 @@
 groups:
-- id: foundations
-  title: 从零开始
-  description: 从模型眼前的材料，到经历如何成为可用的记忆。
-  lessons:
-  - foundations.start.agent
-  - foundations.start.context
-  - foundations.start.memory
-  - foundations.start.reme
-  - foundations.start.files
-  - foundations.start.daily
-  - foundations.start.digest
-  - foundations.start.recall
-  - foundations.start.mem0
-  - foundations.start.letta
-- id: reme-core
-  title: ReMe · 数据与主链路
-  description: 沿着入口、记忆模型、写入、存储与检索追踪源码。
-  lessons:
-  - projects.reme.overview
-  - projects.reme.memory-model
-  - projects.reme.write-path
-  - projects.reme.storage-index
-  - projects.reme.retrieval-context
-- id: reme-engineering
-  title: ReMe · 生命周期与边界
-  description: 理解整理、恢复、接入、评测和采用条件。
-  lessons:
-  - projects.reme.updates-forgetting
-  - projects.reme.runtime-consistency
-  - projects.reme.integration-isolation
-  - projects.reme.evaluation-observability
-  - projects.reme.cost-adoption
-- id: mem0-core
-  title: Mem0 · 数据与主链路
-  description: 以当前 Python OSS 为主线，拆开 ADD-only 写入与多信号检索。
-  lessons:
-  - projects.mem0.overview
-  - projects.mem0.memory-model
-  - projects.mem0.write-path
-  - projects.mem0.storage-index
-  - projects.mem0.retrieval-context
-- id: mem0-engineering
-  title: Mem0 · 生命周期与边界
-  description: 追踪显式更新删除、同步异步、协议作用域、评测和成本。
-  lessons:
-  - projects.mem0.updates-forgetting
-  - projects.mem0.runtime-consistency
-  - projects.mem0.integration-isolation
-  - projects.mem0.evaluation-observability
-  - projects.mem0.cost-adoption
-- id: letta-core
-  title: Letta · 数据与主链路
-  description: 沿当前letta-code追踪MemFS、已提交core、渐进读取和消息检索。
-  lessons:
-  - projects.letta.overview
-  - projects.letta.memory-model
-  - projects.letta.write-path
-  - projects.letta.storage-index
-  - projects.letta.retrieval-context
-- id: letta-engineering
-  title: Letta · 生命周期与边界
-  description: 区分本地与Cloud的更新、同步、运行时、接入和观测证据。
-  lessons:
-  - projects.letta.updates-forgetting
-  - projects.letta.runtime-consistency
-  - projects.letta.integration-isolation
-  - projects.letta.evaluation-observability
-  - projects.letta.cost-adoption
-- id: comparisons
-  title: 横向比较 · ReMe × Mem0
-  description: 沿相同问题比较状态归属、写入、更正与检索，不混用两套实现。
-  lessons:
-  - comparisons.architecture-map
-  - comparisons.write-path
-  - comparisons.fact-updates
-  - comparisons.retrieval-context
-- id: three-way-comparisons
-  title: 三方比较 · ReMe × Mem0 × Letta
-  description: 逐项对照三个固定版本，每个结论提供各自源码证据及实测边界。
-  lessons:
-  - comparisons.three-way-architecture
-  - comparisons.three-way-write-path
-  - comparisons.three-way-fact-updates
-  - comparisons.three-way-retrieval-context
-- id: experiments
-  title: 实验与待验证问题
-  description: 已运行的局部实验，与仍需模型或完整运行时验证的边界。
-  lessons:
-  - experiments.configuration-boundaries
-  - experiments.duplicate-write
-  - experiments.fact-updates
-  - experiments.mem0-local-boundaries
-  - experiments.letta-memory-constraints
+  - id: foundations
+    title: 从零开始
+    description: 从模型眼前的材料，到经历如何成为可用的记忆。
+    lessons:
+      - foundations.start.agent
+      - foundations.start.context
+      - foundations.start.memory
+      - foundations.start.reme
+      - foundations.start.files
+      - foundations.start.daily
+      - foundations.start.digest
+      - foundations.start.recall
+      - foundations.start.mem0
+      - foundations.start.letta
+  - id: ten-framework-comparisons
+    title: 十框架 · 设计总览与验收
+    description: 工程候选清单，不是性能排名；逐项比较状态、写入、检索、删除与采用条件。
+    lessons:
+      - comparisons.ten-framework-architecture
+      - comparisons.ten-framework-lifecycle
+  - id: reme-core
+    title: ReMe · 数据与主链路
+    description: 沿着入口、记忆模型、写入、存储与检索追踪源码。
+    lessons:
+      - projects.reme.overview
+      - projects.reme.memory-model
+      - projects.reme.write-path
+      - projects.reme.storage-index
+      - projects.reme.retrieval-context
+  - id: reme-engineering
+    title: ReMe · 生命周期与边界
+    description: 理解整理、恢复、接入、评测和采用条件。
+    lessons:
+      - projects.reme.updates-forgetting
+      - projects.reme.runtime-consistency
+      - projects.reme.integration-isolation
+      - projects.reme.evaluation-observability
+      - projects.reme.cost-adoption
+  - id: mem0-core
+    title: Mem0 · 数据与主链路
+    description: 以当前 Python OSS 为主线，拆开 ADD-only 写入与多信号检索。
+    lessons:
+      - projects.mem0.overview
+      - projects.mem0.memory-model
+      - projects.mem0.write-path
+      - projects.mem0.storage-index
+      - projects.mem0.retrieval-context
+  - id: mem0-engineering
+    title: Mem0 · 生命周期与边界
+    description: 追踪显式更新删除、同步异步、协议作用域、评测和成本。
+    lessons:
+      - projects.mem0.updates-forgetting
+      - projects.mem0.runtime-consistency
+      - projects.mem0.integration-isolation
+      - projects.mem0.evaluation-observability
+      - projects.mem0.cost-adoption
+  - id: letta-core
+    title: Letta · 数据与主链路
+    description: 沿当前letta-code追踪MemFS、已提交core、渐进读取和消息检索。
+    lessons:
+      - projects.letta.overview
+      - projects.letta.memory-model
+      - projects.letta.write-path
+      - projects.letta.storage-index
+      - projects.letta.retrieval-context
+  - id: letta-engineering
+    title: Letta · 生命周期与边界
+    description: 区分本地与Cloud的更新、同步、运行时、接入和观测证据。
+    lessons:
+      - projects.letta.updates-forgetting
+      - projects.letta.runtime-consistency
+      - projects.letta.integration-isolation
+      - projects.letta.evaluation-observability
+      - projects.letta.cost-adoption
+  - id: hindsight-research
+    title: Hindsight · 源码与设计
+    description: 沿固定源码追踪系统边界、写入存储、检索与生命周期。
+    lessons:
+      - projects.hindsight.overview
+      - projects.hindsight.write-storage
+      - projects.hindsight.retrieval-lifecycle
+  - id: graphiti-research
+    title: Graphiti · 源码与设计
+    description: 沿固定源码追踪系统边界、写入存储、检索与生命周期。
+    lessons:
+      - projects.graphiti.overview
+      - projects.graphiti.write-storage
+      - projects.graphiti.retrieval-lifecycle
+  - id: cognee-research
+    title: Cognee · 源码与设计
+    description: 沿固定源码追踪系统边界、写入存储、检索与生命周期。
+    lessons:
+      - projects.cognee.overview
+      - projects.cognee.write-storage
+      - projects.cognee.retrieval-lifecycle
+  - id: openviking-research
+    title: OpenViking · 源码与设计
+    description: 沿固定源码追踪系统边界、写入存储、检索与生命周期。
+    lessons:
+      - projects.openviking.overview
+      - projects.openviking.write-storage
+      - projects.openviking.retrieval-lifecycle
+  - id: everos-research
+    title: EverOS · 源码与设计
+    description: 沿固定源码追踪系统边界、写入存储、检索与生命周期。
+    lessons:
+      - projects.everos.overview
+      - projects.everos.write-storage
+      - projects.everos.retrieval-lifecycle
+  - id: memos-research
+    title: MemOS · 源码与设计
+    description: 沿固定源码追踪系统边界、写入存储、检索与生命周期。
+    lessons:
+      - projects.memos.overview
+      - projects.memos.write-storage
+      - projects.memos.retrieval-lifecycle
+  - id: langmem-research
+    title: LangMem · 源码与设计
+    description: 沿固定源码追踪系统边界、写入存储、检索与生命周期。
+    lessons:
+      - projects.langmem.overview
+      - projects.langmem.write-storage
+      - projects.langmem.retrieval-lifecycle
+  - id: memobase-research
+    title: Memobase · 源码与设计
+    description: 沿固定源码追踪系统边界、写入存储、检索与生命周期。
+    lessons:
+      - projects.memobase.overview
+      - projects.memobase.write-storage
+      - projects.memobase.retrieval-lifecycle
+  - id: anthropic-research
+    title: Anthropic · 工具、托管与上下文
+    description: 区分本地文件工具、托管Memory Stores、自托管同步和会话压缩的代码边界。
+    lessons:
+      - projects.anthropic.overview
+      - projects.anthropic.tool-lifecycle
+      - projects.anthropic.context-management
+  - id: comparisons
+    title: 横向比较 · ReMe × Mem0
+    description: 沿相同问题比较状态归属、写入、更正与检索，不混用两套实现。
+    lessons:
+      - comparisons.architecture-map
+      - comparisons.write-path
+      - comparisons.fact-updates
+      - comparisons.retrieval-context
+  - id: three-way-comparisons
+    title: 三方比较 · ReMe × Mem0 × Letta
+    description: 逐项对照三个固定版本，每个结论提供各自源码证据及实测边界。
+    lessons:
+      - comparisons.three-way-architecture
+      - comparisons.three-way-write-path
+      - comparisons.three-way-fact-updates
+      - comparisons.three-way-retrieval-context
+  - id: experiments
+    title: 实验与待验证问题
+    description: 已运行的局部实验，与仍需模型或完整运行时验证的边界。
+    lessons:
+      - experiments.configuration-boundaries
+      - experiments.duplicate-write
+      - experiments.fact-updates
+      - experiments.mem0-local-boundaries
+      - experiments.letta-memory-constraints

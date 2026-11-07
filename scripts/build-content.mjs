@@ -42,6 +42,10 @@ export function parsePinnedSourceHref(href, projects) {
   if (!entry) return { error: `正文源码仓库未登记基线 ${repository}` };
   const [projectId, source] = entry;
   if (!/^[a-f0-9]{40}$/.test(commit || '') || commit !== source.commit) return { error: `正文源码链接版本漂移 ${href}` };
+  if (/^#L(?:L?\d|$)/.test(url.hash)) {
+    const lines = /^#L([1-9]\d*)(?:-L([1-9]\d*))?$/.exec(url.hash);
+    if (!lines || (lines[2] && Number(lines[2]) < Number(lines[1]))) return { error: `源码行号片段无效 ${href}` };
+  }
   try { sourcePath = sourcePath.map(decodeURIComponent).join('/'); }
   catch { return { error: `正文源码路径编码无效 ${href}` }; }
   if (!sourcePath) return { error: `正文源码缺少文件路径 ${href}` };

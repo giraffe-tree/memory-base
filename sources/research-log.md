@@ -176,3 +176,51 @@
 - 没有运行上游程序、安装上游依赖或新增任何效果/性能实验。SVG内容的结构检查不能替代源码语义核验，未来修改仍需复审。
 
 通过原GitHub Pages工作流提交发布；独立源码依然不进入Git。发布后的结果以Actions和在线验收为准。
+
+## 第五版 · 十框架与 Anthropic 源码研究（2026-11-07）
+
+### 目标、对象与版本
+
+用户授权拉取上一轮工程候选十框架、使用多个 agent 拆解源码与设计、整理文档并 push。对象为 Hindsight、Mem0、Graphiti、Letta Code、OpenViking、Cognee、MemOS、EverOS、LangMem、Memobase，不是 AML 赛事前十，也不声称构成开源项目完整性能排名。保留 ReMe，另获取 Anthropic 官方 Python SDK 作为设计对照，共 12 个固定源码项目。
+
+8 个新增框架和 Anthropic SDK 以本次获取 HEAD 为研究基线，完整 SHA、时间与路径见 revisions.yaml。实际获取清单独立保存为 acquisition-2026-11-07.json。所有上游均保持 clean，不安装上游依赖，不执行其构建、测试、模型或服务。源码位于被忽略的 refernece/，不提交或推送上游代码、子模块与上游 Git 历史；sources:prepare 能在新机器与 CI 按固定 SHA 获取全部研究版本。
+
+Mem0 与 Letta 已有各十个切面的研究，旧基线保持不变，新增 latest 视图用于差异核查：
+
+- Mem0：研究 ed1f10fc87080f0b67f99be370817504888462ab，拉取 f1791daa86d469249c9b002f62644d58a1eb96a0。两者间16个文件差异为 Node 包、工作区和依赖锁升级，没有改变本轮已有 Python 记忆主线；不据此声称重新核验了所有集成运行行为。
+- Letta Code：研究 e6d6cc27ef1111da80e919dc1cef179613894b66，拉取 9176d8c0b16f408e9240422a98379a423e2176c3。定向读取 memory-git-hooks、local compaction 与 LocalBackend 差异，新增含空格暂存路径保护和压缩压力预算检查，另有模型默认与运行时变动。本文没有把新行为替换到旧基线十篇；后续升级应逐结论重新核验，而非批量替换 SHA。
+
+既有每日更新脚本仍维护 ReMe、Mem0、Letta 三个 latest 视图；这次固定快照获取不额外改变本机定时任务范围。
+
+### 多 agent 文件边界与交叉审阅
+
+三个研究 agent 分别负责 Hindsight/Graphiti/Cognee，OpenViking/EverOS/MemOS，LangMem/Memobase；各自管理对应项目三篇与分组图解。统筹者处理既有基线差异、Anthropic 三篇、两篇跨项目矩阵、版本目录与站点集成。中间 intake 元数据合并进主 manifest 后清理，固定版本唯一事实来源仍是 revisions.yaml。
+
+新增 29 篇：8 框架×3篇、Anthropic 3篇、十框架比较2篇；累计82篇／20组，状态为77篇源码核验、3篇既有局部实验、2篇待运行方案。新增29图，累计82张SVG、246个切面、396处图解源码引用。图解复用既有四种造型，按项目重新编写职责、条件与证据。
+
+交叉审阅并修正的关键问题：
+
+- LangMem 独立 MemoryManager、直接 MemoryStoreManager、create_memory_store_manager 工厂的删除默认分别为 False、True、False；不能把类的默认值移植到公共工厂。shutdown drain 不重新检查取消状态，取消 Future 也不能扩大成必然停止排队写入。均为静态控制流边界，没有复现竞态。
+- EverOS 的 only_if 来源检查只覆盖采用该契约的 daily-log 追加／废弃；会话删除不自动重写综合 Profile 或 Skill，不宣称所有记忆类型都防止晚到复活。
+- Anthropic 托管副本的整库 wipe 恢复、单文件例外、finish 免除删除等待窗口、远端删除时保留唯一未上传副本分别说明；Memory Tool 自持存储与 Managed Memory Stores 客户端分开。
+- Graphiti 删除后尝试修复存活节点摘要，但失败只记录日志；有时间字段也不等于默认只查询当前有效关系。
+- 修正比较页 Mem0 评分文件为 mem0/utils/scoring.py，纠正部分新增正文的重复 L 行号片段。构建器增加行号格式检查，保留合法文档标题锚点，并以负例覆盖重复 L、0、逆序与错误范围。
+
+### 主要设计发现
+
+Hindsight 当前有 store 整轮召回委托扩展，默认 Postgres 使用 recall_unified，再由 engine 融合供给；reflect 为只读回答，后台归纳另行维护。Cognee 当前 remember/recall/improve/forget 与 session 路径分阶段，默认早期 chunk 索引、from_extraction 摘要和 auto 提取器需按配置判断。OpenViking 的 HierarchicalRetriever 当前实际是一次全局召回后可选重排，内容层级与预算组装另有流水线。
+
+EverOS 已变为 MemCell、Markdown、SQLite、LanceDB 与 Cascade 架构，部分算法来自未进入本轮覆盖的 everalgo 独立依赖。MemOS LoRA 文件仍为 placeholder；SDK 显式 Cube 选择未见与用户范围求交、tree update 未实现及 str/list 删除适配问题均记录具体条件，不称已复现漏洞，也不扩展到全部HTTP生产接口。Memobase 原始 blob、画像、事件与 gist 分开维护，event_data 更正不在该函数重建 gist/embedding，删除来源也不自动撤回全部画像。
+
+以上发现是固定版本源码证据，不是端到端质量结论。比较矩阵按来源、事实、文件、索引、历史和副本分账，提出更正、乱序补录、共享来源删除、响应丢失、离线修改与身份范围样本，均标为后续待运行。
+
+### 本地验证与发布边界
+
+- npm run sources:prepare：全部12个固定源码目录、HEAD、origin与clean状态核验通过。
+- npm test：13项通过，包含既有学习记录兼容、同步与异常、图形结构，以及新增行号片段正负例。没有复跑源码与脚本均未变化的三组既有局部实验。
+- npm run check 与 GitHub Pages 子路径生产构建：82篇／20组、全部固定Git树、来源路径、目录、先修、图解覆盖和TypeScript通过。
+- 对生成课程里的正文、来源卡与图解额外巡检1072次固定源码引用、389个唯一链接；带行号的112个文件范围全部有效。结构巡检不能代替上面的语义交叉审阅。
+- 82个独立SVG经Python XML解析通过。没有新增浏览器交互或像素验收；图形样式与学习记录机制沿用原实现。内容主chunk约1.31MB／gzip284KB，Vite继续提示超过500KB，本轮没有引入加载性能测量或无关拆包改造。
+- 工作开始前已有用户 web/style.css 修改，使用SHA-256确认字节保持不变，提交范围明确排除此文件；本地构建可包含工作区样式，远端工作流以实际提交为准。
+
+目标为 origin/main，通过现有GitHub Pages工作流发布；远端构建、部署与在线产物以该提交对应的Actions记录为准。本轮未获得任何新框架的真实模型效果、延迟、成本或故障恢复实验成绩。下一步从实际任务选择候选与运行表面，固定模型和预算，优先验证更正、来源撤回和多副本同步，再讨论效果排名。

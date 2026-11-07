@@ -1,0 +1,277 @@
+[
+  {
+    "lesson": "projects.openviking.overview",
+    "title": "文件、索引与上下文分开完成",
+    "object": "三座档案架分别表示内容、后台索引与上下文编排；位置区分职责，不表示物理部署或强制串行。",
+    "kind": "cabinet",
+    "steps": [
+      {
+        "label": "服务组合",
+        "detail": "主服务组合文件系统、向量管理、持久队列及会话、搜索等子服务；Python调用、HTTP与MCP接入属于不同边界。",
+        "evidence": [
+          "https://github.com/volcengine/OpenViking/blob/1bee73853e2400086632596198282f3c5d118312/openviking/service/core.py#L109-L155"
+        ]
+      },
+      {
+        "label": "会话提交",
+        "detail": "提交先归档原始消息并发布保留状态，再持久排队做记忆提取；得到task_id不表示所有记忆和索引完成。",
+        "evidence": [
+          "https://github.com/volcengine/OpenViking/blob/1bee73853e2400086632596198282f3c5d118312/openviking/session/session.py#L1492-L1535"
+        ]
+      },
+      {
+        "label": "上下文组装",
+        "detail": "候选召回后按层级与token预算读取、计划和渲染；宿主仍需把结果交给回答模型。",
+        "evidence": [
+          "https://github.com/volcengine/OpenViking/blob/1bee73853e2400086632596198282f3c5d118312/openviking/retrieve/context_assembler/pipeline.py#L147-L195"
+        ]
+      }
+    ],
+    "boundary": "固定版本静态核验；当前HierarchicalRetriever采用全局查询后可选重排，不能仅凭类名推断递归检索。"
+  },
+  {
+    "lesson": "projects.openviking.write-storage",
+    "title": "归档、文件变更与索引各有状态",
+    "object": "入纸盘表示归档，压印台表示受约束文件操作，出纸盘表示索引任务；不表示跨存储原子事务。",
+    "kind": "press",
+    "steps": [
+      {
+        "label": "先归档",
+        "detail": "Session在路径锁内拆分归档与保留消息，保存可恢复意图；随后通过QueueFS发布第二阶段任务。",
+        "evidence": [
+          "https://github.com/volcengine/OpenViking/blob/1bee73853e2400086632596198282f3c5d118312/openviking/session/session.py#L1492-L1535"
+        ]
+      },
+      {
+        "label": "再改文件",
+        "detail": "MemoryUpdater先验证URI及迁移，再逐项应用upsert；成功项与错误项分别记录，部分写入不能整批安全重放。",
+        "evidence": [
+          "https://github.com/volcengine/OpenViking/blob/1bee73853e2400086632596198282f3c5d118312/openviking/session/memory/memory_updater.py#L967-L1100"
+        ]
+      },
+      {
+        "label": "排队索引",
+        "detail": "成功写入或编辑的文件再生成embedding消息；入队失败与文件已存在可同时发生，必须分别观测。",
+        "evidence": [
+          "https://github.com/volcengine/OpenViking/blob/1bee73853e2400086632596198282f3c5d118312/openviking/session/memory/memory_updater.py#L1957-L2098"
+        ]
+      }
+    ],
+    "boundary": "未运行模型、故障注入或崩溃恢复；文件存在、任务接受与检索可见是不同完成点。"
+  },
+  {
+    "lesson": "projects.openviking.retrieval-lifecycle",
+    "title": "召回后仍要决定读多少",
+    "object": "筛选台三处对应召回、预算和输出；造型只解释处理责任，不表示实测吞吐或收益。",
+    "kind": "sorter",
+    "steps": [
+      {
+        "label": "候选召回",
+        "detail": "绑定请求上下文，执行全局向量查询并按模式可选重排；层级和目标路径用于范围与内容控制。",
+        "evidence": [
+          "https://github.com/volcengine/OpenViking/blob/1bee73853e2400086632596198282f3c5d118312/openviking/retrieve/hierarchical_retriever.py#L74-L181",
+          "https://github.com/volcengine/OpenViking/blob/1bee73853e2400086632596198282f3c5d118312/openviking/retrieve/hierarchical_retriever.py#L202-L263"
+        ]
+      },
+      {
+        "label": "预算计划",
+        "detail": "加载冷却账本和排除列表，收集候选，按需要预取正文，再由max_tokens限制读取层级与条目数量。",
+        "evidence": [
+          "https://github.com/volcengine/OpenViking/blob/1bee73853e2400086632596198282f3c5d118312/openviking/retrieve/context_assembler/pipeline.py#L147-L195"
+        ]
+      },
+      {
+        "label": "宿主使用",
+        "detail": "最终渲染与可选改写属于上下文产物；召回命中不等于实际进入宿主模型请求或被正确采用。",
+        "evidence": [
+          "https://github.com/volcengine/OpenViking/blob/1bee73853e2400086632596198282f3c5d118312/openviking/retrieve/context_assembler/pipeline.py#L183-L220"
+        ]
+      }
+    ],
+    "boundary": "无同环境端到端效果或成本结果；关键词、意图扩展和重排能力依赖有效配置。"
+  },
+  {
+    "lesson": "projects.everos.overview",
+    "title": "经历、记忆与检索投影分层",
+    "object": "三座档案架表示来源单元、Markdown记忆与检索投影；位置区分数据职责，不表示内容只有三种。",
+    "kind": "cabinet",
+    "steps": [
+      {
+        "label": "共享来源",
+        "detail": "Memorizer先做边界切分；同一个MemCell为用户轨道和可选Agent轨道提供共同来源身份。",
+        "evidence": [
+          "https://github.com/EverMind-AI/EverOS/blob/80ef766b690dd02eb6caa4e9f78bad4a9f0c1ee9/src/everos/service/memory/_memorize.py#L1-L16"
+        ]
+      },
+      {
+        "label": "记忆真相",
+        "detail": "Markdown store持有提取后的记忆，返回entry_id和相对md_path；原始经历和队列状态另有账本。",
+        "evidence": [
+          "https://github.com/EverMind-AI/EverOS/blob/80ef766b690dd02eb6caa4e9f78bad4a9f0c1ee9/src/everos/infra/persistence/markdown/stores.py#L1-L7"
+        ]
+      },
+      {
+        "label": "分区读取",
+        "detail": "SearchManager按owner_type区分用户Episode与Agent案例、技能，读取LanceDB及Markdown，最终回答由宿主完成。",
+        "evidence": [
+          "https://github.com/EverMind-AI/EverOS/blob/80ef766b690dd02eb6caa4e9f78bad4a9f0c1ee9/src/everos/memory/search/manager.py#L1-L29"
+        ]
+      }
+    ],
+    "boundary": "只核验当前EverOS仓库；提取和部分排序内部属于独立everalgo依赖，未下载、执行或验证。"
+  },
+  {
+    "lesson": "projects.everos.write-storage",
+    "title": "先固定来源，再生成文件投影",
+    "object": "入纸盘表示缓冲与MemCell，压印台表示来源检查后写文件，出纸盘表示异步投影；不表示单一事务。",
+    "kind": "press",
+    "steps": [
+      {
+        "label": "切分与持久",
+        "detail": "会话锁覆盖缓冲合并和边界切分；持久化Cell后提取移交supervisor，客户端取消不会直接取消该提取。",
+        "evidence": [
+          "https://github.com/EverMind-AI/EverOS/blob/80ef766b690dd02eb6caa4e9f78bad4a9f0c1ee9/src/everos/service/memory/_memorize.py#L106-L177"
+        ]
+      },
+      {
+        "label": "受控文件写",
+        "detail": "daily-log追加与废弃在owner锁内检查来源；Profile与Skill写入没有同样检查。单文件采用临时文件、fsync与replace。",
+        "evidence": [
+          "https://github.com/EverMind-AI/EverOS/blob/80ef766b690dd02eb6caa4e9f78bad4a9f0c1ee9/src/everos/infra/persistence/markdown/_base/writer.py#L150-L177",
+          "https://github.com/EverMind-AI/EverOS/blob/80ef766b690dd02eb6caa4e9f78bad4a9f0c1ee9/src/everos/infra/persistence/markdown/stores.py#L78-L159",
+          "https://github.com/EverMind-AI/EverOS/blob/80ef766b690dd02eb6caa4e9f78bad4a9f0c1ee9/src/everos/infra/persistence/markdown/stores.py#L492-L509"
+        ]
+      },
+      {
+        "label": "投影追赶",
+        "detail": "Cascade按文件与md_change_state对账，区分新增、修改、删除及可重试失败，允许索引从文件恢复。",
+        "evidence": [
+          "https://github.com/EverMind-AI/EverOS/blob/80ef766b690dd02eb6caa4e9f78bad4a9f0c1ee9/src/everos/infra/cascade/reconciler.py#L1-L37"
+        ]
+      }
+    ],
+    "boundary": "进程内锁与单文件原子替换不等于多进程或多存储事务；未实测后台完成时间。"
+  },
+  {
+    "lesson": "projects.everos.retrieval-lifecycle",
+    "title": "检索、反思和删除沿来源协作",
+    "object": "筛选台三个观察面表示查询路径、替代时机和遗忘范围，不代表三种动作总是顺序执行。",
+    "kind": "sorter",
+    "steps": [
+      {
+        "label": "按类型检索",
+        "detail": "HYBRID按Episode、案例和技能选择不同流水线；KEYWORD与VECTOR跳过融合，AGENTIC由管理器单独处理。",
+        "evidence": [
+          "https://github.com/EverMind-AI/EverOS/blob/80ef766b690dd02eb6caa4e9f78bad4a9f0c1ee9/src/everos/memory/search/adapter.py#L1-L52"
+        ]
+      },
+      {
+        "label": "先成新再废旧",
+        "detail": "反思先写合并Episode，等新事实成功后才废弃旧项；事实失败时旧内容仍保持有效。",
+        "evidence": [
+          "https://github.com/EverMind-AI/EverOS/blob/80ef766b690dd02eb6caa4e9f78bad4a9f0c1ee9/src/everos/memory/reflection/orchestrator.py#L1-L21"
+        ]
+      },
+      {
+        "label": "来源先删除",
+        "detail": "会话删除先清来源，再清用户Episode、事实、前瞻或Agent案例；不会自动重写综合Profile与Skill，索引由Cascade追赶。",
+        "evidence": [
+          "https://github.com/EverMind-AI/EverOS/blob/80ef766b690dd02eb6caa4e9f78bad4a9f0c1ee9/src/everos/service/memory/_delete.py#L1-L25",
+          "https://github.com/EverMind-AI/EverOS/blob/80ef766b690dd02eb6caa4e9f78bad4a9f0c1ee9/src/everos/service/memory/_delete.py#L183-L216"
+        ]
+      }
+    ],
+    "boundary": "未运行反思或删除竞态；daily-log来源检查不能推广到所有综合记忆，检索结果仍需宿主注入上下文。"
+  },
+  {
+    "lesson": "projects.memos.overview",
+    "title": "容器统一，后端能力逐项确认",
+    "object": "三座档案架表示MOS编排、MemCube组合和实际后端；架位不表示所有类型均已初始化或完整可用。",
+    "kind": "cabinet",
+    "steps": [
+      {
+        "label": "MOS编排",
+        "detail": "MOSCore组合用户、会话、Cube、Reader、聊天模型和可选调度器；它不是一种固定数据库。",
+        "evidence": [
+          "https://github.com/MemTensor/MemOS/blob/d326a6419467c2205041b58533b0ebfdf4f38173/src/memos/mem_os/core.py#L38-L79"
+        ]
+      },
+      {
+        "label": "Cube组合",
+        "detail": "GeneralMemCube按配置创建文本、激活、参数与偏好记忆；uninitialized分支保持为空。",
+        "evidence": [
+          "https://github.com/MemTensor/MemOS/blob/d326a6419467c2205041b58533b0ebfdf4f38173/src/memos/mem_cube/general.py#L21-L48"
+        ]
+      },
+      {
+        "label": "实现边界",
+        "detail": "工厂注册LoRA不代表参数记忆已可用；当前模块明确为placeholder，load未实现、dump写占位内容。",
+        "evidence": [
+          "https://github.com/MemTensor/MemOS/blob/d326a6419467c2205041b58533b0ebfdf4f38173/src/memos/memories/parametric/lora.py#L1-L41"
+        ]
+      }
+    ],
+    "boundary": "固定版本静态核验；KV缓存依赖模型适配与推理条件，未启动模型、数据库或服务。"
+  },
+  {
+    "lesson": "projects.memos.write-storage",
+    "title": "返回身份与持久化成功分开看",
+    "object": "入纸盘表示入口路由，压印台表示节点写入，出纸盘表示调度；三个工位不构成原子事务。",
+    "kind": "press",
+    "steps": [
+      {
+        "label": "后端分支",
+        "detail": "tree_text先经MemReader提取，其他messages分支可直接包装条目；同步与异步模式选择不同提取和调度。",
+        "evidence": [
+          "https://github.com/MemTensor/MemOS/blob/d326a6419467c2205041b58533b0ebfdf4f38173/src/memos/mem_os/core.py#L753-L799"
+        ]
+      },
+      {
+        "label": "图节点提交",
+        "detail": "批量路径先收集ID再提交图节点；future异常只记日志时，返回ID仍需核对真实落库状态。",
+        "evidence": [
+          "https://github.com/MemTensor/MemOS/blob/d326a6419467c2205041b58533b0ebfdf4f38173/src/memos/memories/textual/tree_text_memory/organize/manager.py#L185-L248"
+        ]
+      },
+      {
+        "label": "独立调度",
+        "detail": "scheduler按优先级区分立即与排队任务，并携带trace与task身份；提交状态不等于处理完成。",
+        "evidence": [
+          "https://github.com/MemTensor/MemOS/blob/d326a6419467c2205041b58533b0ebfdf4f38173/src/memos/mem_scheduler/base_mixins/queue_ops.py#L34-L92"
+        ]
+      }
+    ],
+    "boundary": "未复现批量故障；general_text的向量payload与tree_text的图组织不是同一持久化实现。"
+  },
+  {
+    "lesson": "projects.memos.retrieval-lifecycle",
+    "title": "检索、提示与适配分别核验",
+    "object": "筛选台分别表示跨Cube查询、模型提示和删除适配；位置不代表已复现缺陷或线上调用拓扑。",
+    "kind": "sorter",
+    "steps": [
+      {
+        "label": "跨Cube查询",
+        "detail": "默认使用可访问Cube；显式install_cube_ids分支未见求交或逐Cube校验，需要独立隔离样本。",
+        "evidence": [
+          "https://github.com/MemTensor/MemOS/blob/d326a6419467c2205041b58533b0ebfdf4f38173/src/memos/mem_os/core.py#L570-L615"
+        ]
+      },
+      {
+        "label": "上下文输出",
+        "detail": "chat把召回memory文本编号后放入system prompt；默认提示没有完整附带来源元数据。",
+        "evidence": [
+          "https://github.com/MemTensor/MemOS/blob/d326a6419467c2205041b58533b0ebfdf4f38173/src/memos/mem_os/core.py#L354-L388"
+        ]
+      },
+      {
+        "label": "删除适配",
+        "detail": "高层delete传单个字符串，tree后端期望列表并逐项遍历；该SDK路径存在待复现的类型适配风险。",
+        "evidence": [
+          "https://github.com/MemTensor/MemOS/blob/d326a6419467c2205041b58533b0ebfdf4f38173/src/memos/memories/textual/tree.py#L402-L410",
+          "https://github.com/MemTensor/MemOS/blob/d326a6419467c2205041b58533b0ebfdf4f38173/src/memos/mem_os/core.py#L1036-L1061"
+        ]
+      }
+    ],
+    "boundary": "静态风险不等于可利用漏洞或已复现Bug；HTTP入口可能另有防护，需沿实际服务路径验证。"
+  }
+]

@@ -12,6 +12,14 @@ test('fixed GitHub and raw file links resolve to the correct project and decoded
 test('moving branches, shortened hashes and a different commit cannot masquerade as fixed evidence', () => {
   for (const ref of ['main', sha.slice(0, 12), '0'.repeat(40)]) assert.match(parsePinnedSourceHref(`https://github.com/letta-ai/letta-code/blob/${ref}/src/agent/memory.ts`, projects).error, /版本漂移/);
 });
+test('source line anchors accept GitHub ranges and reject malformed or reversed locations', () => {
+  const file = `https://github.com/letta-ai/letta-code/blob/${sha}/src/agent/memory.ts`;
+  assert.deepEqual(parsePinnedSourceHref(`${file}#L1-L20`, projects), { projectId: 'letta', path: 'src/agent/memory.ts' });
+  assert.deepEqual(parsePinnedSourceHref(`${file}#License`, projects), { projectId: 'letta', path: 'src/agent/memory.ts' });
+  for (const anchor of ['#LL1-L20', '#L0', '#L20-L1', '#L1-20']) {
+    assert.match(parsePinnedSourceHref(`${file}${anchor}`, projects).error, /行号片段无效/);
+  }
+});
 test('unknown source repositories and malformed file paths are rejected without inventing a baseline', () => {
   assert.match(parsePinnedSourceHref(`https://github.com/letta-ai/letta/blob/${sha}/README.md`, projects).error, /未登记基线/);
   assert.match(parsePinnedSourceHref(`https://github.com/letta-ai/letta-code/blob/${sha}/`, projects).error, /缺少文件路径/);

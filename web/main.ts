@@ -51,8 +51,21 @@ function renderNav() {
 function input(s: string) { return document.querySelector<HTMLInputElement>(s)!; }
 function footer(ids = projectEntries.map(([id]) => id)) { return `<footer class="page-footer"><span>一页，一个可以讲清楚的知识点。</span><span>${ids.map(id => `${escape(displayName(id))} · ${escape(course.projects[id]?.commit.slice(0, 8) || '')}`).join(' / ')}</span></footer>`; }
 function projectEntrances() {
-  const comparison = ordered.find(l => l.id === 'comparisons.three-way-architecture') || ordered.find(l => l.id === 'comparisons.architecture-map') || ordered.find(l => l.project === 'comparison');
-  const descriptions: Record<string, string> = { reme: '从工作区文件出发，读懂 daily、digest、派生索引与 Dream 整理。', mem0: '从记忆记录出发，追踪抽取、向量持久化、融合评分与显式更新。', letta: '研究当前 Letta Code：沿 LocalBackend、MemFS、提示投影与渐进读取追踪记忆。' };
+  const comparison = ordered.find(l => l.id === 'comparisons.ten-framework-architecture') || ordered.find(l => l.id === 'comparisons.three-way-architecture') || ordered.find(l => l.id === 'comparisons.architecture-map') || ordered.find(l => l.project === 'comparison');
+  const descriptions: Record<string, string> = {
+    reme: '从工作区文件出发，读懂 daily、digest、派生索引与 Dream 整理。',
+    mem0: '从记忆记录出发，追踪抽取、向量持久化、融合评分与显式更新。',
+    letta: '研究 Letta Code 的固定版本：沿 LocalBackend、MemFS、提示投影与渐进读取追踪记忆。',
+    hindsight: '区分 retain、recall、只读 reflect 与后台归纳，核对来源和派生状态。',
+    graphiti: '从事件到实体关系，追踪时间失效、混合检索和来源级删除。',
+    cognee: '拆开 remember、recall、improve 与 forget，观察会话、图和资料的完成点。',
+    openviking: '沿 URI、Session 与分层内容，区分文件提交、向量召回和上下文预算。',
+    everos: '追踪 MemCell、Markdown、SQLite 与 LanceDB，以及用户和 Agent 两条记忆轨道。',
+    memos: '从 Cube 与具体后端核对统一接口、调度、检索和更新删除适配。',
+    langmem: '拆开进程内记忆原语、BaseStore、工具与反思执行器的职责。',
+    memobase: '从原始 blob 到画像、事件和 gist，理解缓冲刷新与上下文组装。',
+    anthropic: '额外设计对照：本地 Memory Tool、托管 Memory Stores、自托管同步与会话压缩。',
+  };
   return `<section class="project-entrances" aria-label="研究项目入口">${projectEntries.map(([id, p]) => {
     const entry = byId.get(`projects.${id}.overview`) || ordered.find(l => l.project === id);
     const count = ordered.filter(l => l.project === id && l.id.startsWith('projects.')).length;

@@ -2,24 +2,96 @@ projects:
   reme:
     repository: https://github.com/agentscope-ai/ReMe
     commit: d323356e6f11c0faf4bf30fae7a2edc30e18fbb9
-    verified_on: '2026-11-04'
+    verified_on: 2026-11-04
     local_path: refernece/ReMe
-    revision_time: '2026-11-04T15:25:11+08:00'
+    revision_time: 2026-11-04T15:25:11+08:00
     scope: Application、默认配置、AutoMemory、Dream、FileStore、Search、服务接入及相关单元测试的定向源码阅读；不代表全仓审计或端到端模型验证
     display_name: ReMe
   mem0:
     display_name: Mem0
     repository: https://github.com/mem0ai/mem0
     commit: ed1f10fc87080f0b67f99be370817504888462ab
-    verified_on: '2026-11-04'
+    verified_on: 2026-11-04
     local_path: refernece/mem0
-    revision_time: '2026-11-04T18:55:26+08:00'
+    revision_time: 2026-11-04T18:55:26+08:00
     scope: Python OSS Memory/AsyncMemory、默认配置、写入/检索/显式更新删除、SQLite/实体collection、自托管REST与HostedClient边界及相关测试的定向源码阅读；不代表托管服务实现或完整模型实测
   letta:
-    display_name: Letta
+    display_name: Letta Code
     repository: https://github.com/letta-ai/letta-code
     commit: e6d6cc27ef1111da80e919dc1cef179613894b66
-    verified_on: '2026-11-04'
+    verified_on: 2026-11-04
     local_path: refernece/letta-code
-    revision_time: '2026-11-04T15:41:15+08:00'
+    revision_time: 2026-11-04T15:41:15+08:00
     scope: 当前letta-code的MemFS v2、LocalBackend/LocalStore、Memory渐进读取、system prompt编译、消息检索、reflection与AppServer的定向源码阅读；Cloud仅核验客户端边界，不以旧V1归档替代当前实现
+  hindsight:
+    display_name: Hindsight
+    repository: https://github.com/vectorize-io/hindsight
+    commit: 0bd55015393d224deec1073d63b24bcc0faad164
+    verified_on: 2026-11-07
+    local_path: refernece/hindsight
+    revision_time: 2026-11-07T12:27:45+01:00
+    scope: MemoryEngine、retain编排、Postgres memories store、混合检索、reflect、删除与tenant扩展的定向源码阅读；未安装依赖或运行模型、数据库和质量评测
+  graphiti:
+    display_name: Graphiti
+    repository: https://github.com/getzep/graphiti
+    commit: 747b480ec6b12ecb718f1e2bc588b20ee36ea9c2
+    verified_on: 2026-11-07
+    local_path: refernece/graphiti
+    revision_time: 2026-11-06T04:49:50+00:00
+    scope: Graphiti core事件写入、时序实体关系模型、bulk事务、检索配方、remove_episode与评测脚本的定向源码阅读；不代表Zep托管产品或端到端运行验证
+  cognee:
+    display_name: Cognee
+    repository: https://github.com/topoteretes/cognee
+    commit: 8853378eae5366addb064e758e560a456146ae1a
+    verified_on: 2026-11-07
+    local_path: refernece/cognee
+    revision_time: 2026-11-06T21:00:54+01:00
+    scope: 当前remember/recall/forget、add/cognify任务管线、Data与provenance、rollback、HybridRetriever及dataset handler的定向源码阅读；未运行模型、数据库或评测
+  openviking:
+    display_name: OpenViking
+    repository: https://github.com/volcengine/OpenViking
+    commit: 1bee73853e2400086632596198282f3c5d118312
+    verified_on: 2026-11-07
+    local_path: refernece/openviking
+    revision_time: 2026-11-07T19:27:32+08:00
+    scope: OpenVikingService、Session两阶段提交、VikingFS写入与访问、当前全局召回、上下文预算流水线、MemoryUpdater及LongMemEval脚本的定向源码阅读；未运行模型、向量后端或服务
+  everos:
+    display_name: EverOS
+    repository: https://github.com/EverMind-AI/EverOS
+    commit: 80ef766b690dd02eb6caa4e9f78bad4a9f0c1ee9
+    verified_on: 2026-11-07
+    local_path: refernece/everos
+    revision_time: 2026-11-06T16:46:26+08:00
+    scope: 当前EverOS的MemCell、用户/Agent双轨、Markdown权威存储、SQLite状态、LanceDB投影、Cascade、反思与删除编排的定向源码阅读；everalgo独立依赖内部不在本轮覆盖，未运行上游
+  memos:
+    display_name: MemOS
+    repository: https://github.com/MemTensor/MemOS
+    commit: d326a6419467c2205041b58533b0ebfdf4f38173
+    verified_on: 2026-11-07
+    local_path: refernece/memos
+    revision_time: 2026-11-04T14:20:33+08:00
+    scope: MOSCore Python SDK、MemCube、General/Tree TextMemory、Reader与图整理、搜索/chat、作用域及更新删除适配、LoRA占位实现与评测脚本的定向源码阅读；不等同HTTP生产服务或模型实测
+  langmem:
+    display_name: LangMem
+    repository: https://github.com/langchain-ai/langmem
+    commit: 8620b986af5b0c7593e6b7fbece2998690d22d15
+    verified_on: 2026-11-07
+    local_path: refernece/langmem
+    revision_time: 2026-11-03T07:25:33-08:00
+    scope: MemoryManager/MemoryStoreManager与工厂、manage/search工具、BaseStore与namespace、ReflectionExecutor与退出排空、部署认证图及prompt优化原语的定向源码阅读；未运行模型、Store服务或上游测试
+  memobase:
+    display_name: Memobase
+    repository: https://github.com/memodb-io/memobase
+    commit: 358c16bbc6d687937d79bc2f984a11c3be8da901
+    verified_on: 2026-11-07
+    local_path: refernece/memobase
+    revision_time: 2026-01-11T11:43:56+08:00
+    scope: FastAPI项目认证、blob/buffer、画像/事件/gist模型、Redis后台刷新、context检索组装、更新删除及MCP示例的定向源码阅读；未启动数据库、Redis、模型或API
+  anthropic:
+    display_name: Anthropic SDK 对照
+    repository: https://github.com/anthropics/anthropic-sdk-python
+    commit: 4c7b598466b88559583f98216139be8e9b34c1fc
+    verified_on: 2026-11-07
+    local_path: refernece/anthropic-sdk-python
+    revision_time: 2026-11-05T18:56:55+00:00
+    scope: Memory Tool 的同步与异步本地文件实现、Managed Agents Memory Stores 客户端、SessionMemoryStores 同步控制流、上下文管理和 Compaction 类型及相关测试的定向源码阅读；不代表托管服务端源码、Claude聊天产品内部或真实API验证
